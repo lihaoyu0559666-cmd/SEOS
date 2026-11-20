@@ -1,0 +1,85 @@
+{
+  "mode": "engineering",
+  "action": "optimize",
+  "dataset_kind": "synthetic",
+  "bank_volumes_m3": [
+    10,
+    20,
+    30
+  ],
+  "bank_dry_density_kg_m3": [
+    1000,
+    1500,
+    2000
+  ],
+  "compacted_volumes_m3": [
+    10,
+    10,
+    30
+  ],
+  "compacted_dry_density_kg_m3": [
+    2000,
+    2000,
+    2000
+  ],
+  "haul_rate_cny_per_m3_km": [
+    [
+      2,
+      3,
+      4
+    ],
+    [
+      4,
+      2,
+      3
+    ],
+    [
+      3,
+      4,
+      2
+    ]
+  ],
+  "distance_km": [
+    [
+      1,
+      2,
+      3
+    ],
+    [
+      2,
+      1,
+      2
+    ],
+    [
+      3,
+      2,
+      1
+    ]
+  ],
+  "density_source": "SYNTHETIC arithmetic fixture, not measured",
+  "distance_source": "SYNTHETIC arithmetic fixture, not measured",
+  "rate_source": "SYNTHETIC arithmetic fixture, not contract",
+  "billing_volume_state": "bank",
+  "scenario_conditions": {
+    "compatible_material": true,
+    "zero_dry_mass_loss": true,
+    "closed_balance": true
+  },
+  "allowed": [
+    [
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true
+    ]
+  ]
+}

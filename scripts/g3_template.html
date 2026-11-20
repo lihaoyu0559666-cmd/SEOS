@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEOS · 土方调配分析</title>
+<link rel="icon" href="data:,">
+<style>__CSS__</style>
+</head>
+<body>
+<a class="skip" href="#results">跳转到方案结果</a>
+<header class="masthead"><div class="viewport">
+<div class="brand">
+<div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m3 11 11-6 11 6-11 6zM3 15l11 6 11-6M3 19l11 6 11-6"/></svg></div>
+<div><h1>SEOS 土方调配分析</h1><p>智能建造工程工作台 · 天然方计费与干土质量守恒</p></div>
+</div>
+<div class="header-actions"><span class="scope-chip" id="scope-chip">教学工程 · 合成数据</span><a href="static.html">打开离线基线快照</a></div>
+</div></header>
+<main class="viewport workspace">
+<aside id="controls" aria-label="参数编辑">
+<div class="control-title"><h2>参数控制台</h2><a href="#results">查看结果</a></div>
+<label class="field">验证模式<select id="mode"><option value="synthetic">教学工程（合成数据）</option><option value="real">真实工程（资料待审）</option></select></label>
+<nav aria-label="参数操作"><button id="recalculate" type="button" disabled>立即重算</button><button id="reset" type="button">恢复预置</button></nav>
+<p id="mode-note" class="note"></p>
+<p id="case-note" class="case-note"></p>
+<div id="fields"></div>
+<details id="advanced"><summary>完整参数 JSON</summary><label class="field">计算输入<textarea id="parameters" spellcheck="false"></textarea></label><p class="note">可增删情景与方案，或修改来源记录。停止编辑后自动重算。继续使用表单前请同步。</p><button id="sync-form" type="button">从 JSON 同步表单</button></details>
+</aside>
+<section id="results" class="results" tabindex="-1" aria-labelledby="results-title">
+<div class="toolbar"><h2 id="results-title">方案结果</h2><div class="states"><span id="engine-state">Python 初始化中</span><span id="chart-state">Chart.js 加载中</span></div></div>
+<p id="status" role="status" class="notice">正在载入预置教学案例…</p>
+<div id="current"></div>
+<details id="current-result" class="details-pane" hidden><summary>五模块计算明细</summary><pre id="result"></pre></details>
+<details class="details-pane"><summary>最近一次有效结果</summary><p class="note">仅供历史对照。当前参数的结果见上方。</p><pre id="last-valid">尚无有效结果</pre></details>
+<details class="details-pane"><summary>算法与口径</summary><p>土类依据已核读的 GB/T 50145 细粒土子集。方量换算按干土质量，运输优化按天然方计费。敏感性逐点重求同一约束下的最优解，时序依据合成年度情景，韧性比较依据显式的扰动假设。</p></details>
+<figure class="schematic" id="site-diagram">
+<h3>施工挖填剖面示意</h3>
+<svg viewBox="0 0 680 154" role="img" aria-label="左侧挖方、右侧填方，虚线表示运输方向">
+<rect x="0" y="8" width="680" height="138" rx="10" fill="#f4f7fb"/>
+<path d="M24 92H656M24 120H656" stroke="#d8e1eb"/>
+<path d="M30 72h65l34 26h84l38-26h45v53H30z" fill="#dcc2a7" stroke="#9f724e"/>
+<path d="M388 109h60l38-35h83l42 35h34v16H388z" fill="#acd9cb" stroke="#087b69"/>
+<path d="M30 111h265m94 8h256" stroke="#9f724e" stroke-opacity=".45" stroke-dasharray="5 5"/>
+<path d="M219 57h227m-12-7 12 7-12 7" fill="none" stroke="#1f4e79" stroke-width="2.5" stroke-dasharray="6 4"/>
+<g fill="#12243a" font-size="16" font-family="system-ui,sans-serif"><text x="55" y="53">挖方区</text><text x="486" y="55">填方区</text><text x="282" y="42">运输方向</text></g>
+</svg>
+<figcaption>教学二维示意 · 剖面和方向仅用于解释挖、运、填，不表示真实地形、运输路线或比例。</figcaption>
+</figure>
+</section>
+</main>
+<footer><div class="viewport"><p>真实工程资料须独立审查。首次运行交互报告需联网加载 PyScript 和 Chart.js。</p></div></footer>
+<script id="seos-data" type="application/json">__DATA__</script>
+<script>__JS__</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" onload="seosDependency('chart',true)" onerror="seosDependency('chart',false)"></script>
+<script type="module" src="https://pyscript.net/releases/2026.7.3/core.js" onerror="seosDependency('python',false)"></script>
+<script type="py">__PYTHON__</script>
+</body>
+</html>

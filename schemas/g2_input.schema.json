@@ -1,0 +1,458 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "g2.1"
+    },
+    "dataset": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "kind": {
+          "const": "synthetic"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "kind"
+      ]
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "fine_mass_pct": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "oversize_mass_pct": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "organic_mass_pct": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "liquid_limit_pct": {
+            "type": "number",
+            "minimum": 0
+          },
+          "plastic_limit_pct": {
+            "type": "number",
+            "minimum": 0
+          },
+          "liquid_limit_method": {
+            "enum": [
+              "disk",
+              "cone_76g_30deg_17mm"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "fine_mass_pct",
+          "oversize_mass_pct",
+          "organic_mass_pct",
+          "liquid_limit_pct",
+          "plastic_limit_pct",
+          "liquid_limit_method"
+        ]
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "transport": {
+      "type": "object",
+      "properties": {
+        "dataset_kind": {
+          "const": "synthetic"
+        },
+        "bank_volumes_m3": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "compacted_volumes_m3": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "bank_dry_density_kg_m3": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "compacted_dry_density_kg_m3": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "billing_volume_state": {
+          "const": "bank"
+        },
+        "density_source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "distance_source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "rate_source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "allowed": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "haul_rate_cny_per_m3_km": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "distance_km": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "scenario_conditions": {
+          "type": "object",
+          "properties": {
+            "compatible_material": {
+              "const": true
+            },
+            "zero_dry_mass_loss": {
+              "const": true
+            },
+            "closed_balance": {
+              "const": true
+            }
+          },
+          "required": [
+            "compatible_material",
+            "zero_dry_mass_loss",
+            "closed_balance"
+          ]
+        }
+      },
+      "required": [
+        "dataset_kind",
+        "bank_volumes_m3",
+        "compacted_volumes_m3",
+        "bank_dry_density_kg_m3",
+        "compacted_dry_density_kg_m3",
+        "billing_volume_state",
+        "density_source",
+        "distance_source",
+        "rate_source",
+        "allowed",
+        "haul_rate_cny_per_m3_km",
+        "distance_km",
+        "scenario_conditions"
+      ]
+    },
+    "loose_dry_density_kg_m3": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "material_policy": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "accepted_classes": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "CL",
+                "CH",
+                "ML",
+                "MH"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 4
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      },
+      "required": [
+        "source",
+        "accepted_classes"
+      ]
+    },
+    "prediction": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "years": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 10
+        },
+        "supply_growth_pct": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "demand_growth_pct": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "discount_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "annual_payment_synthetic_cny": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "source",
+        "years",
+        "supply_growth_pct",
+        "demand_growth_pct",
+        "discount_pct",
+        "annual_payment_synthetic_cny"
+      ]
+    },
+    "risk": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "horizon_days": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "kind": {
+                "enum": [
+                  "rain",
+                  "equipment_failure",
+                  "road_closure"
+                ]
+              },
+              "duration_days": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "supply_available": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "routes_open": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "duration_days",
+              "supply_available",
+              "routes_open"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 30
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "allowed": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            },
+            "required": [
+              "id",
+              "allowed"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 8
+        },
+        "weight_source": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "weights": {
+          "type": "object",
+          "properties": {
+            "worst_service": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "horizon_service": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "original_plan_service": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "full_service_share": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "cost_retention": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "worst_service",
+            "horizon_service",
+            "original_plan_service",
+            "full_service_share",
+            "cost_retention"
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "horizon_days",
+        "events",
+        "alternatives"
+      ],
+      "dependentRequired": {
+        "weights": [
+          "weight_source"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "dataset",
+    "samples",
+    "transport",
+    "loose_dry_density_kg_m3",
+    "material_policy",
+    "prediction",
+    "risk"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "source": "Taskbook section 4.3, simulated teaching data",
+  "supply": [50000, 30000, 20000],
+  "demand": [45000, 35000, 20000],
+  "costs": [[8.5, 12, 15], [11, 6.2, 14], [13, 14, 7.5]]
+}

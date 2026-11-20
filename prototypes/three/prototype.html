@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEOS 三维可行性原型</title>
+<!--LICENSE-->
+<style>
+body{font:16px/1.55 system-ui;color:#12243a;background:#edf2f7;margin:20px auto;padding:16px;max-width:900px}
+button{font:inherit;padding:8px;border:1px solid #75899d;background:#fff;border-radius:7px;color:#1f4e79}
+[hidden]{display:none!important}:focus-visible{outline:2px solid #1d67ac;outline-offset:3px}canvas{display:block;max-width:100%}svg{width:100%;height:auto;max-height:126px}
+</style>
+<h1>教学三维示意 · 非真实工程地形</h1>
+<p>格块、剖面与路线是概念模型，未使用工程地形数据或调运结果。</p>
+<button id="launch">启用三维</button> <button id="close">关闭三维</button>
+<p id="state" role="status">二维示意已显示</p>
+<div id="controls" hidden><button data-angle="rotate">旋转视角</button> <button data-angle="top">提高视角</button> <button data-angle="zoom">切换缩放</button></div>
+<div id="stage"></div>
+<svg id="fallback" viewBox="0 0 680 138" role="img" aria-label="左侧挖方，右侧分层填方">
+  <rect width="680" height="138" rx="10" fill="#f4f7fb"/>
+  <path d="M30 56h65l34 29h84l38-29h45v62H30z" fill="#dcc2a7" stroke="#9f724e"/>
+  <path d="M388 102h60l38-40h83l42 40h34v16H388z" fill="#acd9cb" stroke="#087b69"/>
+  <path d="M239 44h205m-12-7 12 7-12 7" fill="none" stroke="#1f4e79" stroke-width="2.5" stroke-dasharray="6 4"/>
+  <g fill="#12243a" font-size="16"><text x="55" y="40">挖方</text><text x="505" y="45">填方</text></g>
+</svg>
+<script>__SCENE__</script>
+</html>

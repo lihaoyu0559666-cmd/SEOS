@@ -1,0 +1,270 @@
+{
+  "schema_version": "g2.1",
+  "dataset": {
+    "kind": "synthetic",
+    "id": "TEACH-G2-001",
+    "source": "G1 synthetic transport fixture with explicit synthetic G2 extensions"
+  },
+  "samples": [
+    {
+      "fine_mass_pct": 90,
+      "oversize_mass_pct": 0,
+      "organic_mass_pct": 1,
+      "liquid_limit_pct": 40,
+      "plastic_limit_pct": 20,
+      "liquid_limit_method": "disk",
+      "source": "SYNTHETIC teaching values; no lab test performed"
+    },
+    {
+      "fine_mass_pct": 90,
+      "oversize_mass_pct": 0,
+      "organic_mass_pct": 1,
+      "liquid_limit_pct": 60,
+      "plastic_limit_pct": 25,
+      "liquid_limit_method": "disk",
+      "source": "SYNTHETIC teaching values; no lab test performed"
+    },
+    {
+      "fine_mass_pct": 90,
+      "oversize_mass_pct": 0,
+      "organic_mass_pct": 1,
+      "liquid_limit_pct": 35,
+      "plastic_limit_pct": 25,
+      "liquid_limit_method": "disk",
+      "source": "SYNTHETIC teaching values; no lab test performed"
+    }
+  ],
+  "material_policy": {
+    "accepted_classes": [
+      [
+        "CL",
+        "CH",
+        "ML"
+      ],
+      [
+        "CL",
+        "CH"
+      ],
+      [
+        "CH",
+        "ML"
+      ]
+    ],
+    "source": "SYNTHETIC teaching acceptance list; assumes permitted mixing and conditions in transport fixture"
+  },
+  "transport": {
+    "mode": "engineering",
+    "action": "optimize",
+    "dataset_kind": "synthetic",
+    "bank_volumes_m3": [
+      10,
+      20,
+      30
+    ],
+    "bank_dry_density_kg_m3": [
+      1000,
+      1500,
+      2000
+    ],
+    "compacted_volumes_m3": [
+      10,
+      10,
+      30
+    ],
+    "compacted_dry_density_kg_m3": [
+      2000,
+      2000,
+      2000
+    ],
+    "haul_rate_cny_per_m3_km": [
+      [
+        2,
+        3,
+        4
+      ],
+      [
+        4,
+        2,
+        3
+      ],
+      [
+        3,
+        4,
+        2
+      ]
+    ],
+    "distance_km": [
+      [
+        1,
+        2,
+        3
+      ],
+      [
+        2,
+        1,
+        2
+      ],
+      [
+        3,
+        2,
+        1
+      ]
+    ],
+    "density_source": "SYNTHETIC arithmetic fixture, not measured",
+    "distance_source": "SYNTHETIC arithmetic fixture, not measured",
+    "rate_source": "SYNTHETIC arithmetic fixture, not contract",
+    "billing_volume_state": "bank",
+    "scenario_conditions": {
+      "compatible_material": true,
+      "zero_dry_mass_loss": true,
+      "closed_balance": true
+    },
+    "allowed": [
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ]
+    ]
+  },
+  "loose_dry_density_kg_m3": [
+    800,
+    1200,
+    1600
+  ],
+  "prediction": {
+    "years": 5,
+    "supply_growth_pct": 0,
+    "demand_growth_pct": 10,
+    "discount_pct": 5,
+    "annual_payment_synthetic_cny": 160,
+    "source": "SYNTHETIC annual sensitivity inputs; constant end-of-year illustrative payment"
+  },
+  "risk": {
+    "source": "SYNTHETIC what-if inputs; independent events; full service resumes after scenario duration",
+    "horizon_days": 10,
+    "events": [
+      {
+        "id": "rain",
+        "kind": "rain",
+        "duration_days": 3,
+        "supply_available": [
+          0.5,
+          1,
+          1
+        ],
+        "routes_open": [
+          [
+            true,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ]
+        ]
+      },
+      {
+        "id": "machine",
+        "kind": "equipment_failure",
+        "duration_days": 2,
+        "supply_available": [
+          1,
+          0.5,
+          1
+        ],
+        "routes_open": [
+          [
+            true,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ]
+        ]
+      },
+      {
+        "id": "route",
+        "kind": "road_closure",
+        "duration_days": 4,
+        "supply_available": [
+          1,
+          1,
+          1
+        ],
+        "routes_open": [
+          [
+            false,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ]
+        ]
+      }
+    ],
+    "alternatives": [
+      {
+        "id": "enable_backup_1_to_2",
+        "allowed": [
+          [
+            true,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ],
+          [
+            true,
+            true,
+            true
+          ]
+        ]
+      }
+    ],
+    "weights": {
+      "worst_service": 0.2,
+      "horizon_service": 0.2,
+      "original_plan_service": 0.2,
+      "full_service_share": 0.2,
+      "cost_retention": 0.2
+    },
+    "weight_source": "SYNTHETIC equal weighting for illustration only; no project preferences elicited"
+  }
+}

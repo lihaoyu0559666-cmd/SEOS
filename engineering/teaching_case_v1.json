@@ -1,0 +1,92 @@
+{
+  "case_id": "TEACH-ENG-001",
+  "verification_track": "TEACHING_ENGINEERING",
+  "data_origin": "SYNTHETIC",
+  "decision": "DEC-007",
+  "input_file": "data/engineering_synthetic.json",
+  "input_sha256": "e27988dfc5201c3c43769ca9790da912a3fe919ebc444d7a019e31ce216dc930",
+  "case_scope": "Conditional dry-soil mass transport, three bank-volume sources and three compacted-volume demands. No claim of actual soil classification or site suitability.",
+  "parameter_sources": {
+    "bank_volumes_m3": {
+      "origin": "SYNTHETIC",
+      "unit": "m3 bank",
+      "basis": "Explicit arithmetic fixture, not taskbook measured volume"
+    },
+    "compacted_volumes_m3": {
+      "origin": "SYNTHETIC",
+      "unit": "m3 compacted",
+      "basis": "Explicit arithmetic fixture balanced by dry mass"
+    },
+    "bank_dry_density_kg_m3": {
+      "origin": "SYNTHETIC",
+      "unit": "kg/m3 bank",
+      "basis": "Hypothetical three natural packing states; not a laboratory report"
+    },
+    "compacted_dry_density_kg_m3": {
+      "origin": "SYNTHETIC",
+      "unit": "kg/m3 compacted",
+      "basis": "Hypothetical common target state; no test certification"
+    },
+    "haul_rate_cny_per_m3_km": {
+      "origin": "SYNTHETIC",
+      "unit": "CNY/(m3 bank km)",
+      "basis": "Arithmetic pricing scenario under DEC-005/006; no contract"
+    },
+    "distance_km": {
+      "origin": "SYNTHETIC",
+      "unit": "km",
+      "basis": "Declared scenario distances, not measured routes"
+    }
+  },
+  "material_assumptions": [
+    {
+      "id": "MAT-T01",
+      "statement": "Hypothetical mutually compatible material, natural density differs by packing state only; no soil-type classification asserted",
+      "kind": "TEACHING_ASSUMPTION"
+    },
+    {
+      "id": "MAT-T02",
+      "statement": "Material may be mixed for this thought experiment and every destination has the explicitly stated target dry density",
+      "kind": "TEACHING_ASSUMPTION"
+    },
+    {
+      "id": "MAT-T03",
+      "statement": "No removal/addition of dry solids, screening, haulage loss, borrow or disposal; water mass is outside the conserved dry-mass variable",
+      "kind": "TEACHING_ASSUMPTION"
+    },
+    {
+      "id": "MAT-T04",
+      "statement": "All explicitly allowed routes are hypothetical and carry no claim of real access or materials compliance",
+      "kind": "TEACHING_ASSUMPTION"
+    }
+  ],
+  "basis_records": [
+    "DEC-004",
+    "DEC-005",
+    "DEC-006",
+    "DEC-007",
+    "research/20261120_post_audit/SOURCE_REGISTER.json",
+    "research/20261121_dec007/PRIMARY_RETRIEVAL.json"
+  ],
+  "independent_proof": {
+    "type": "Exact primal-dual certificate plus separate natural-volume HiGHS equations",
+    "source_potentials_cny_per_bank_m3": [
+      "-10/3",
+      "0",
+      "-2"
+    ],
+    "destination_potentials_cny_per_kg": [
+      "2/375",
+      "1/750",
+      "1/500"
+    ]
+  },
+  "must_not_claim": [
+    "measured project parameters",
+    "certified soil classification",
+    "real construction cost",
+    "actual site material suitability"
+  ],
+  "formal_acceptance_status": "NOT TESTED",
+  "real_engineering_status": "BLOCKED"
+}

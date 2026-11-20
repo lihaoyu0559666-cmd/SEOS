@@ -1,0 +1,641 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
+<title>SEOS 离线基线快照</title><style>:root {
+  color-scheme: light;
+  --blue-700:#1f4e79; --teal-500:#16a085; --slate-950:#12243a; --slate-700:#4a5f75;
+  --surface:#fff; --base:#edf2f7; --well:#f4f7fb; --line:#dbe4ee; --control:#75899d;
+  --ink:var(--slate-950); --muted:var(--slate-700); --accent:var(--blue-700); --focus:#1d67ac; --focus-on-dark:#b5eadf;
+  --ok:#126853; --ok-bg:#e5f5ee; --warn:#805014; --warn-bg:#fff3d9; --alert:#9d312a; --alert-bg:#fff0ed;
+  --supply:#1f4e79; --demand:#a34b27; --comparison:#087b69; --purple:#69488b; --grid:#e2e9f1;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  --r-input:7px; --r-panel:14px; --r-shell:21px;
+  --type-meta:.8125rem; --type-body:.9375rem; --type-title:1.125rem; --type-page:1.6875rem; --type-data:1.55rem;
+  --control-height:40px; --shadow:0 1px 2px #172f4810,0 3px 10px #172f4808;
+  --ease:cubic-bezier(.2,.65,.3,1); --duration:150ms;
+  --font:"Microsoft YaHei UI","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+}
+* {box-sizing:border-box}
+body {margin:0;background:var(--base);color:var(--ink);font:var(--type-body)/1.55 var(--font);font-variant-numeric:tabular-nums}
+h1,h2,h3,p,figure,dl,dd {margin:0}
+h1 {font-size:var(--type-page);line-height:1.15;letter-spacing:-.03em}
+h2 {font-size:var(--type-title);line-height:1.35}
+h3 {font-size:var(--type-body);line-height:1.45}
+p {max-width:68ch}
+a {color:var(--accent);text-underline-offset:3px}
+:focus-visible {outline:2px solid var(--focus);outline-offset:3px}
+::selection {background:#ccece4;color:var(--ink)}
+[hidden] {display:none!important}
+.viewport {max-width:1680px;margin-inline:auto;padding-inline:var(--sp-5)}
+.masthead {background:#11263b;color:var(--surface);border-block-end:3px solid var(--teal-500)}
+.masthead .viewport {min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);padding-block:var(--sp-3)}
+.brand {display:flex;align-items:center;gap:var(--sp-3);min-width:0}
+.brand-mark {width:46px;height:46px;flex:none;display:grid;place-items:center;color:#b5eadf;border:1px solid #68869b;border-radius:11px;background:#173550}
+.brand-mark svg {width:28px;height:28px}
+.brand p {color:#c6d7e7;font-size:var(--type-meta);margin-block-start:var(--sp-1)}
+.header-actions {display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.masthead :focus-visible {outline-color:var(--focus-on-dark)}
+.header-actions a {display:inline-flex;align-items:center;min-height:var(--control-height);padding-inline:var(--sp-3);color:#e7f1fa;border:1px solid #8ca5b9;border-radius:var(--r-input);text-decoration:none}
+.skip {position:absolute;z-index:5;inset-inline-start:var(--sp-4);inset-block-start:var(--sp-3);padding:var(--sp-2);background:var(--surface);transform:translateY(-180%)}
+.skip:focus {transform:none}
+.workspace {display:grid;grid-template-columns:minmax(265px,308px) minmax(0,1fr);gap:var(--sp-5);padding-block:var(--sp-5);align-items:start}
+aside,.viz,.details-pane,.schematic {background:var(--surface);border:1px solid var(--line);border-radius:var(--r-panel);box-shadow:var(--shadow)}
+aside,.results {min-width:0}
+aside {padding:var(--sp-4)}
+.control-title {display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-block-end:var(--sp-3)}
+.control-title a {font-size:var(--type-meta)}
+.case-note,.note,.field small,.viz p,.schematic figcaption,footer {color:var(--muted);font-size:var(--type-meta)}
+.case-note {overflow-wrap:anywhere;margin-block-start:var(--sp-2)}
+.field {display:grid;gap:var(--sp-1);margin:var(--sp-2) 0;min-width:0;font-size:var(--type-meta);font-weight:600}
+.fields {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-1) var(--sp-2)}
+.wide {grid-column:1/-1}
+.subgroup {margin-block:var(--sp-3) var(--sp-1);color:var(--accent)}
+.check {display:flex;align-items:center;gap:var(--sp-1);min-height:28px}
+button,input,select,textarea {font:inherit;color:inherit;background:var(--surface);border:1px solid var(--control);border-radius:var(--r-input)}
+button,input,select {min-height:var(--control-height);padding:var(--sp-1) var(--sp-2)}
+input:not([type=checkbox]),select,textarea {width:100%;min-width:0}
+input[type=checkbox] {appearance:auto;min-height:0;inline-size:17px;block-size:17px;accent-color:var(--accent)}
+textarea {padding:var(--sp-2);min-height:190px;resize:vertical;font:var(--type-meta)/1.5 ui-monospace,monospace}
+button {cursor:pointer;transition:background-color var(--duration) var(--ease)}
+button:disabled {opacity:.58;cursor:wait}
+button:active:not(:disabled) {border-color:var(--accent);background:#e7eff8}
+aside nav {display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-block:var(--sp-3)}
+aside nav button {flex:1}
+aside nav button:first-child {background:var(--accent);color:var(--surface);border-color:var(--accent);font-weight:650}
+aside nav button:first-child:active:not(:disabled) {background:#173e60}
+aside details {border-block-start:1px solid var(--line);padding-block:var(--sp-1)}
+aside #fields {margin-block-start:var(--sp-4)}
+summary {min-height:37px;padding-block:var(--sp-2);font-weight:650;cursor:pointer;color:var(--ink)}
+summary::marker {color:var(--accent)}
+#advanced button {margin-block:var(--sp-2)}
+.toolbar {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-2)}
+.states {display:flex;gap:var(--sp-1);flex-wrap:wrap;font-size:var(--type-meta);color:var(--muted)}
+.states span,.scope-chip {padding:var(--sp-1) var(--sp-2);border:1px solid var(--line);border-radius:var(--r-input);background:var(--surface)}
+.scope-chip {color:#dfedf8;border-color:#6e8da4;background:#173550;font-size:var(--type-meta)}
+.notice {margin-block:var(--sp-3);padding:var(--sp-2) var(--sp-3);border:1px solid var(--line);border-radius:var(--r-input);background:var(--well);color:var(--muted);overflow-wrap:anywhere;font-size:var(--type-meta)}
+.notice[data-state=CALCULATED] {background:var(--ok-bg);color:var(--ok);border-color:#acd2c7}
+.notice.error {background:var(--alert-bg);color:var(--alert);border-color:#e8bbb5}
+.notice[data-state=SOURCE_REVIEW_REQUIRED] {background:var(--warn-bg);color:var(--warn);border-color:#e1c895}
+.summary {margin-block-end:var(--sp-4)}
+.summary p {margin-block-start:var(--sp-2);font-size:var(--type-meta);color:var(--muted);overflow-wrap:anywhere}
+.kpis {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--sp-2)}
+.kpi {background:var(--surface);border:1px solid var(--line);border-radius:var(--r-panel);padding:var(--sp-3);overflow-wrap:anywhere;box-shadow:var(--shadow)}
+.kpi:first-child {background:#e9f1fa;border-color:#c6d9ea}
+.kpi dt {color:var(--muted);font-size:var(--type-meta);font-weight:600}
+.kpi dd {font-size:var(--type-data);font-weight:750;line-height:1.2;margin-block:var(--sp-1);letter-spacing:-.02em}
+.kpi small {font-size:var(--type-meta);color:var(--muted);display:block;font-weight:400;letter-spacing:0;margin-block-start:var(--sp-2)}
+.viz-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)}
+.viz {min-width:0;padding:var(--sp-4);break-inside:avoid}
+.viz h3 {font-weight:700;font-size:1rem;margin-block-end:var(--sp-1)}
+.plot {position:relative;height:208px;margin-block-start:var(--sp-2)}
+.plot canvas {max-inline-size:100%}
+.viz:last-child {grid-column:1/-1}
+.viz:last-child .plot {height:256px}
+.pending {visibility:hidden}
+.heat {width:100%;margin-block-start:var(--sp-2);table-layout:fixed;border-collapse:separate;border-spacing:4px}
+.heat td,.heat th {text-align:center;padding:var(--sp-2) var(--sp-1);overflow-wrap:anywhere}
+.heat th {font-weight:600;color:var(--muted);font-size:var(--type-meta)}
+.heat td {border:1px solid var(--line);border-radius:var(--r-input);font-weight:700;font-size:var(--type-meta)}
+.heat td[data-blocked] {background:repeating-linear-gradient(-45deg,#f5f7fb 0 5px,#e8edf5 5px 6px);color:var(--muted)}
+.heat td:focus-visible {outline-offset:1px;outline-color:var(--ink)}
+.heat-key {display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-block-start:var(--sp-2);font-size:var(--type-meta);color:var(--muted)}
+.heat-scale {width:76px;height:9px;border-radius:5px;background:linear-gradient(to right,#f1f8f7,#62b8a7);border:1px solid #79a7a2}
+.details-pane,.schematic {margin-block-start:var(--sp-3);padding:0 var(--sp-4)}
+.details-pane pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--type-meta);max-height:350px;overflow:auto;overscroll-behavior:contain}
+.details-pane p {margin-block-end:var(--sp-3)}
+.schematic {padding-block:var(--sp-3)}
+.schematic svg {display:block;width:100%;height:auto;max-height:150px}
+.schematic figcaption {margin-block-start:var(--sp-2)}
+footer {padding-block:var(--sp-4);border-block-start:1px solid var(--line)}
+.static-shell {max-width:980px;margin:auto;padding:var(--sp-5)}
+.static-shell section {overflow:auto}
+.static-shell table {border-collapse:collapse;width:100%;margin-block:var(--sp-4);background:var(--surface)}
+.static-shell caption {padding-block:var(--sp-2);text-align:start;font-weight:700;color:var(--accent)}
+.static-shell td,.static-shell th {padding:var(--sp-2);text-align:start;border:1px solid var(--line)}
+.static-shell pre {white-space:pre-wrap;overflow-wrap:anywhere}
+@media (hover:hover) {
+  button:hover:not(:disabled) {background:#eef4fa}
+  aside nav button:first-child:hover:not(:disabled) {background:#183f64}
+  .header-actions a:hover {background:#27465f}
+  summary:hover {color:var(--accent)}
+  .heat td:hover {outline:1px solid var(--focus)}
+}
+@media (max-width:1100px) {
+  .viewport {padding-inline:var(--sp-4)}
+  .workspace {grid-template-columns:minmax(240px,270px) minmax(0,1fr);gap:var(--sp-3)}
+  .kpis {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:820px) {
+  .workspace {grid-template-columns:1fr}
+  .kpis {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .viz-grid {grid-template-columns:1fr}
+  .viz:last-child {grid-column:auto}
+}
+@media (max-width:490px) {
+  .masthead .viewport {align-items:flex-start;flex-direction:column}
+  .header-actions {gap:var(--sp-2)}
+  .brand-mark {width:40px;height:40px}
+  .field input,.field select {font-size:16px}
+  .plot {height:221px}
+}
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after {transition:none!important;scroll-behavior:auto!important} }
+</style>
+<header class="masthead"><div class="viewport"><div><h1>SEOS 离线教学基线</h1>
+<p>合成数据 · 固定参数</p></div><div class="header-actions"><a href="index.html">返回交互报告（需联网）</a></div></div></header>
+<main class="static-shell"><p class="note">结果由同一 Python 教学模型生成。运费以合成元计，以下结果随快照固定。</p>
+<section aria-label="五类分析数据"><table><caption>调运矩阵 · m³天然方</caption><thead><tr><th scope="col">挖方 / 填方</th><th scope="col">1</th><th scope="col">2</th><th scope="col">3</th></tr></thead><tbody><tr><td>1</td><td>10</td><td>0</td><td>0</td></tr><tr><td>2</td><td>6.6666667</td><td>13.333333</td><td>0</td></tr><tr><td>3</td><td>0</td><td>0</td><td>30</td></tr></tbody></table><table><caption>方案与扰动成本 · 合成元</caption><thead><tr><th scope="col">方案</th><th scope="col">无扰动</th><th scope="col">rain</th><th scope="col">machine</th><th scope="col">route</th></tr></thead><tbody><tr><td>baseline</td><td>160</td><td>—</td><td>—</td><td>—</td></tr><tr><td>enable_backup_1_to_2</td><td>160</td><td>—</td><td>—</td><td>240</td></tr></tbody></table><table><caption>费率敏感性 · 调整倍率与合成运费</caption><thead><tr><th scope="col">倍率</th><th scope="col">费率</th><th scope="col">合成运费</th><th scope="col">状态</th></tr></thead><tbody><tr><td>0.5</td><td>1</td><td>130</td><td>OPTIMAL</td></tr><tr><td>0.75</td><td>1.5</td><td>145</td><td>OPTIMAL</td></tr><tr><td>1</td><td>2</td><td>160</td><td>OPTIMAL</td></tr><tr><td>1.25</td><td>2.5</td><td>175</td><td>OPTIMAL</td></tr><tr><td>1.5</td><td>3</td><td>190</td><td>OPTIMAL</td></tr></tbody></table><table><caption>年度情景 · kg 干土</caption><thead><tr><th scope="col">年</th><th scope="col">供给</th><th scope="col">需求</th><th scope="col">缺口</th></tr></thead><tbody><tr><td>1</td><td>100000</td><td>110000</td><td>10000</td></tr><tr><td>2</td><td>100000</td><td>121000</td><td>21000</td></tr><tr><td>3</td><td>100000</td><td>133100</td><td>33100</td></tr><tr><td>4</td><td>100000</td><td>146410</td><td>46410</td></tr><tr><td>5</td><td>100000</td><td>161051</td><td>61051</td></tr></tbody></table><table><caption>韧性 · 五项归一化指标</caption><thead><tr><th scope="col">方案</th><th scope="col">最差服务率</th><th scope="col">评价窗服务率</th><th scope="col">原计划送达率</th><th scope="col">完整服务占比</th><th scope="col">成本保持率</th></tr></thead><tbody><tr><td>baseline</td><td>0.85</td><td>0.97166667</td><td>0.9</td><td>0</td><td>0</td></tr><tr><td>enable_backup_1_to_2</td><td>0.85</td><td>0.985</td><td>0.9</td><td>0.33333333</td><td>0.22222222</td></tr></tbody></table></section><details class="details-pane"><summary>五模块计算明细</summary><pre>{
+  &quot;schema_version&quot;: &quot;g2.1&quot;,
+  &quot;dataset_kind&quot;: &quot;synthetic&quot;,
+  &quot;currency_result&quot;: null,
+  &quot;modules&quot;: {
+    &quot;M1&quot;: {
+      &quot;status&quot;: &quot;CLASSIFIED&quot;,
+      &quot;samples&quot;: [
+        {
+          &quot;status&quot;: &quot;CLASSIFIED&quot;,
+          &quot;soil_class&quot;: &quot;CL&quot;,
+          &quot;plasticity_index_pct&quot;: 20.0,
+          &quot;a_line_pct&quot;: 14.6,
+          &quot;source&quot;: &quot;SYNTHETIC teaching values; no lab test performed&quot;,
+          &quot;rule&quot;: &quot;GB/T 50145-2007 (2026 amendment), table 4.0.8&quot;,
+          &quot;scope&quot;: &quot;synthetic teaching classification&quot;
+        },
+        {
+          &quot;status&quot;: &quot;CLASSIFIED&quot;,
+          &quot;soil_class&quot;: &quot;CH&quot;,
+          &quot;plasticity_index_pct&quot;: 35.0,
+          &quot;a_line_pct&quot;: 29.2,
+          &quot;source&quot;: &quot;SYNTHETIC teaching values; no lab test performed&quot;,
+          &quot;rule&quot;: &quot;GB/T 50145-2007 (2026 amendment), table 4.0.8&quot;,
+          &quot;scope&quot;: &quot;synthetic teaching classification&quot;
+        },
+        {
+          &quot;status&quot;: &quot;CLASSIFIED&quot;,
+          &quot;soil_class&quot;: &quot;ML&quot;,
+          &quot;plasticity_index_pct&quot;: 10.0,
+          &quot;a_line_pct&quot;: 10.95,
+          &quot;source&quot;: &quot;SYNTHETIC teaching values; no lab test performed&quot;,
+          &quot;rule&quot;: &quot;GB/T 50145-2007 (2026 amendment), table 4.0.8&quot;,
+          &quot;scope&quot;: &quot;synthetic teaching classification&quot;
+        }
+      ],
+      &quot;material_allowed&quot;: [
+        [
+          true,
+          true,
+          false
+        ],
+        [
+          true,
+          true,
+          true
+        ],
+        [
+          true,
+          false,
+          true
+        ]
+      ],
+      &quot;policy_source&quot;: &quot;SYNTHETIC teaching acceptance list; assumes permitted mixing and conditions in transport fixture&quot;
+    },
+    &quot;M2&quot;: {
+      &quot;status&quot;: &quot;CALCULATED&quot;,
+      &quot;states&quot;: {
+        &quot;bank&quot;: [
+          {
+            &quot;status&quot;: &quot;CALCULATED&quot;,
+            &quot;dry_mass_kg&quot;: 10000,
+            &quot;target_volume_m3&quot;: 12.5,
+            &quot;dry_mass_residual_kg&quot;: 0.0,
+            &quot;conditions&quot;: [
+              &quot;same material&quot;,
+              &quot;no dry-solid loss or addition&quot;
+            ],
+            &quot;decision&quot;: &quot;DEC-004&quot;,
+            &quot;source_state&quot;: &quot;bank&quot;,
+            &quot;target_state&quot;: &quot;loose&quot;,
+            &quot;source_volume_m3&quot;: 10,
+            &quot;dry_mass_exact_kg&quot;: &quot;10000&quot;
+          },
+          {
+            &quot;status&quot;: &quot;CALCULATED&quot;,
+            &quot;dry_mass_kg&quot;: 30000,
+            &quot;target_volume_m3&quot;: 25.0,
+            &quot;dry_mass_residual_kg&quot;: 0.0,
+            &quot;conditions&quot;: [
+              &quot;same material&quot;,
+              &quot;no dry-solid loss or addition&quot;
+            ],
+            &quot;decision&quot;: &quot;DEC-004&quot;,
+            &quot;source_state&quot;: &quot;bank&quot;,
+            &quot;target_state&quot;: &quot;loose&quot;,
+            &quot;source_volume_m3&quot;: 20,
+            &quot;dry_mass_exact_kg&quot;: &quot;30000&quot;
+          },
+          {
+            &quot;status&quot;: &quot;CALCULATED&quot;,
+            &quot;dry_mass_kg&quot;: 60000,
+            &quot;target_volume_m3&quot;: 37.5,
+            &quot;dry_mass_residual_kg&quot;: 0.0,
+            &quot;conditions&quot;: [
+              &quot;same material&quot;,
+              &quot;no dry-solid loss or addition&quot;
+            ],
+            &quot;decision&quot;: &quot;DEC-004&quot;,
+            &quot;source_state&quot;: &quot;bank&quot;,
+            &quot;target_state&quot;: &quot;loose&quot;,
+            &quot;source_volume_m3&quot;: 30,
+            &quot;dry_mass_exact_kg&quot;: &quot;60000&quot;
+          }
+        ],
+        &quot;compacted&quot;: [
+          {
+            &quot;status&quot;: &quot;CALCULATED&quot;,
+            &quot;dry_mass_kg&quot;: 20000,
+            &quot;target_volume_m3&quot;: 10.0,
+            &quot;dry_mass_residual_kg&quot;: 0.0,
+            &quot;conditions&quot;: [
+              &quot;same material&quot;,
+              &quot;no dry-solid loss or addition&quot;
+            ],
+            &quot;decision&quot;: &quot;DEC-004&quot;,
+            &quot;source_state&quot;: &quot;compacted&quot;,
+            &quot;target_state&quot;: &quot;compacted&quot;,
+            &quot;source_volume_m3&quot;: 10,
+            &quot;dry_mass_exact_kg&quot;: &quot;20000&quot;
+          },
+          {
+            &quot;status&quot;: &quot;CALCULATED&quot;,
+            &quot;dry_mass_kg&quot;: 20000,
+            &quot;target_volume_m3&quot;: 10.0,
+            &quot;dry_mass_residual_kg&quot;: 0.0,
+            &quot;conditions&quot;: [
+              &quot;same material&quot;,
+              &quot;no dry-solid loss or addition&quot;
+            ],
+            &quot;decision&quot;: &quot;DEC-004&quot;,
+            &quot;source_state&quot;: &quot;compacted&quot;,
+            &quot;target_state&quot;: &quot;compacted&quot;,
+            &quot;source_volume_m3&quot;: 10,
+            &quot;dry_mass_exact_kg&quot;: &quot;20000&quot;
+          },
+          {
+            &quot;status&quot;: &quot;CALCULATED&quot;,
+            &quot;dry_mass_kg&quot;: 60000,
+            &quot;target_volume_m3&quot;: 30.0,
+            &quot;dry_mass_residual_kg&quot;: 0.0,
+            &quot;conditions&quot;: [
+              &quot;same material&quot;,
+              &quot;no dry-solid loss or addition&quot;
+            ],
+            &quot;decision&quot;: &quot;DEC-004&quot;,
+            &quot;source_state&quot;: &quot;compacted&quot;,
+            &quot;target_state&quot;: &quot;compacted&quot;,
+            &quot;source_volume_m3&quot;: 30,
+            &quot;dry_mass_exact_kg&quot;: &quot;60000&quot;
+          }
+        ]
+      }
+    },
+    &quot;M3&quot;: {
+      &quot;status&quot;: &quot;OPTIMAL&quot;,
+      &quot;schema_version&quot;: &quot;0.4&quot;,
+      &quot;dataset_kind&quot;: &quot;synthetic&quot;,
+      &quot;scope&quot;: &quot;Synthetic compatible-material zero-loss closed-balance model; no real engineering conclusion&quot;,
+      &quot;billing_volume_state&quot;: &quot;bank&quot;,
+      &quot;matrix_unit&quot;: &quot;m3 bank&quot;,
+      &quot;objective_unit&quot;: &quot;synthetic CNY&quot;,
+      &quot;matrix&quot;: [
+        [
+          10.0,
+          0.0,
+          0.0
+        ],
+        [
+          6.666666666666667,
+          13.333333333333334,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          30.0
+        ]
+      ],
+      &quot;matrix_exact&quot;: [
+        [
+          &quot;10&quot;,
+          &quot;0&quot;,
+          &quot;0&quot;
+        ],
+        [
+          &quot;20/3&quot;,
+          &quot;40/3&quot;,
+          &quot;0&quot;
+        ],
+        [
+          &quot;0&quot;,
+          &quot;0&quot;,
+          &quot;30&quot;
+        ]
+      ],
+      &quot;objective&quot;: 160.0,
+      &quot;objective_exact&quot;: &quot;160&quot;,
+      &quot;synthetic_cost_cny&quot;: 160.0,
+      &quot;currency_result&quot;: null,
+      &quot;feasibility_verified&quot;: true,
+      &quot;bank_volume_residuals_m3&quot;: [
+        0.0,
+        0.0,
+        0.0
+      ],
+      &quot;dry_mass_residuals_kg&quot;: [
+        0.0,
+        0.0,
+        0.0
+      ],
+      &quot;route_price_cny_per_bank_m3&quot;: [
+        [
+          2.0,
+          6.0,
+          12.0
+        ],
+        [
+          8.0,
+          2.0,
+          6.0
+        ],
+        [
+          9.0,
+          8.0,
+          2.0
+        ]
+      ],
+      &quot;decisions&quot;: [
+        &quot;DEC-004&quot;,
+        &quot;DEC-005&quot;,
+        &quot;DEC-006&quot;
+      ],
+      &quot;allowed&quot;: [
+        [
+          true,
+          false,
+          false
+        ],
+        [
+          true,
+          true,
+          true
+        ],
+        [
+          true,
+          false,
+          true
+        ]
+      ]
+    },
+    &quot;M4&quot;: {
+      &quot;status&quot;: &quot;PROJECTED&quot;,
+      &quot;method&quot;: &quot;conditional_compound_scenario&quot;,
+      &quot;source&quot;: &quot;SYNTHETIC annual sensitivity inputs; constant end-of-year illustrative payment&quot;,
+      &quot;year_zero&quot;: {
+        &quot;supply_kg&quot;: 100000.0,
+        &quot;demand_kg&quot;: 100000.0
+      },
+      &quot;series&quot;: [
+        {
+          &quot;year&quot;: 1,
+          &quot;supply_kg&quot;: 100000.0,
+          &quot;demand_kg&quot;: 110000.0,
+          &quot;shortfall_kg&quot;: 10000.0,
+          &quot;cumulative_net_deficit_kg&quot;: 10000.0
+        },
+        {
+          &quot;year&quot;: 2,
+          &quot;supply_kg&quot;: 100000.0,
+          &quot;demand_kg&quot;: 121000.0,
+          &quot;shortfall_kg&quot;: 21000.0,
+          &quot;cumulative_net_deficit_kg&quot;: 31000.0
+        },
+        {
+          &quot;year&quot;: 3,
+          &quot;supply_kg&quot;: 100000.0,
+          &quot;demand_kg&quot;: 133100.0,
+          &quot;shortfall_kg&quot;: 33100.0,
+          &quot;cumulative_net_deficit_kg&quot;: 64100.0
+        },
+        {
+          &quot;year&quot;: 4,
+          &quot;supply_kg&quot;: 100000.0,
+          &quot;demand_kg&quot;: 146410.0,
+          &quot;shortfall_kg&quot;: 46410.0,
+          &quot;cumulative_net_deficit_kg&quot;: 110510.0
+        },
+        {
+          &quot;year&quot;: 5,
+          &quot;supply_kg&quot;: 100000.0,
+          &quot;demand_kg&quot;: 161051.0,
+          &quot;shortfall_kg&quot;: 61051.0,
+          &quot;cumulative_net_deficit_kg&quot;: 171561.0
+        }
+      ],
+      &quot;first_shortfall_year&quot;: 1,
+      &quot;first_cumulative_deficit_year&quot;: 1,
+      &quot;present_value_synthetic_cny&quot;: 692.7162673009311,
+      &quot;accuracy_evidence&quot;: &quot;NOT TESTED&quot;
+    },
+    &quot;M5&quot;: {
+      &quot;status&quot;: &quot;EVALUATED&quot;,
+      &quot;source&quot;: &quot;SYNTHETIC what-if inputs; independent events; full service resumes after scenario duration&quot;,
+      &quot;alternatives&quot;: [
+        {
+          &quot;id&quot;: &quot;baseline&quot;,
+          &quot;base_synthetic_cny&quot;: 160.0,
+          &quot;status&quot;: &quot;EVALUATED&quot;,
+          &quot;events&quot;: [
+            {
+              &quot;id&quot;: &quot;rain&quot;,
+              &quot;kind&quot;: &quot;rain&quot;,
+              &quot;duration_days&quot;: 3,
+              &quot;served_kg_equivalent&quot;: 95000.0,
+              &quot;unserved_kg_equivalent&quot;: 5000.0,
+              &quot;service&quot;: 0.95,
+              &quot;original_plan_service&quot;: 0.95,
+              &quot;horizon_service&quot;: 0.985,
+              &quot;full_service_cost_synthetic_cny&quot;: null
+            },
+            {
+              &quot;id&quot;: &quot;machine&quot;,
+              &quot;kind&quot;: &quot;equipment_failure&quot;,
+              &quot;duration_days&quot;: 2,
+              &quot;served_kg_equivalent&quot;: 85000.0,
+              &quot;unserved_kg_equivalent&quot;: 15000.0,
+              &quot;service&quot;: 0.85,
+              &quot;original_plan_service&quot;: 0.85,
+              &quot;horizon_service&quot;: 0.97,
+              &quot;full_service_cost_synthetic_cny&quot;: null
+            },
+            {
+              &quot;id&quot;: &quot;route&quot;,
+              &quot;kind&quot;: &quot;road_closure&quot;,
+              &quot;duration_days&quot;: 4,
+              &quot;served_kg_equivalent&quot;: 90000.0,
+              &quot;unserved_kg_equivalent&quot;: 10000.0,
+              &quot;service&quot;: 0.9,
+              &quot;original_plan_service&quot;: 0.9,
+              &quot;horizon_service&quot;: 0.96,
+              &quot;full_service_cost_synthetic_cny&quot;: null
+            }
+          ],
+          &quot;weights&quot;: {
+            &quot;worst_service&quot;: 0.2,
+            &quot;horizon_service&quot;: 0.2,
+            &quot;original_plan_service&quot;: 0.2,
+            &quot;full_service_share&quot;: 0.2,
+            &quot;cost_retention&quot;: 0.2
+          },
+          &quot;weight_source&quot;: &quot;SYNTHETIC equal weighting for illustration only; no project preferences elicited&quot;,
+          &quot;metrics&quot;: {
+            &quot;worst_service&quot;: 0.85,
+            &quot;horizon_service&quot;: 0.9716666666666667,
+            &quot;original_plan_service&quot;: 0.9,
+            &quot;full_service_share&quot;: 0.0,
+            &quot;cost_retention&quot;: 0.0
+          },
+          &quot;weighted_score&quot;: 0.5443333333333333
+        },
+        {
+          &quot;id&quot;: &quot;enable_backup_1_to_2&quot;,
+          &quot;base_synthetic_cny&quot;: 160.0,
+          &quot;status&quot;: &quot;EVALUATED&quot;,
+          &quot;events&quot;: [
+            {
+              &quot;id&quot;: &quot;rain&quot;,
+              &quot;kind&quot;: &quot;rain&quot;,
+              &quot;duration_days&quot;: 3,
+              &quot;served_kg_equivalent&quot;: 95000.0,
+              &quot;unserved_kg_equivalent&quot;: 5000.0,
+              &quot;service&quot;: 0.95,
+              &quot;original_plan_service&quot;: 0.95,
+              &quot;horizon_service&quot;: 0.985,
+              &quot;full_service_cost_synthetic_cny&quot;: null
+            },
+            {
+              &quot;id&quot;: &quot;machine&quot;,
+              &quot;kind&quot;: &quot;equipment_failure&quot;,
+              &quot;duration_days&quot;: 2,
+              &quot;served_kg_equivalent&quot;: 85000.0,
+              &quot;unserved_kg_equivalent&quot;: 15000.0,
+              &quot;service&quot;: 0.85,
+              &quot;original_plan_service&quot;: 0.85,
+              &quot;horizon_service&quot;: 0.97,
+              &quot;full_service_cost_synthetic_cny&quot;: null
+            },
+            {
+              &quot;id&quot;: &quot;route&quot;,
+              &quot;kind&quot;: &quot;road_closure&quot;,
+              &quot;duration_days&quot;: 4,
+              &quot;served_kg_equivalent&quot;: 100000.0,
+              &quot;unserved_kg_equivalent&quot;: 0.0,
+              &quot;service&quot;: 1.0,
+              &quot;original_plan_service&quot;: 0.9,
+              &quot;horizon_service&quot;: 1.0,
+              &quot;full_service_cost_synthetic_cny&quot;: 240.0
+            }
+          ],
+          &quot;weights&quot;: {
+            &quot;worst_service&quot;: 0.2,
+            &quot;horizon_service&quot;: 0.2,
+            &quot;original_plan_service&quot;: 0.2,
+            &quot;full_service_share&quot;: 0.2,
+            &quot;cost_retention&quot;: 0.2
+          },
+          &quot;weight_source&quot;: &quot;SYNTHETIC equal weighting for illustration only; no project preferences elicited&quot;,
+          &quot;metrics&quot;: {
+            &quot;worst_service&quot;: 0.85,
+            &quot;horizon_service&quot;: 0.985,
+            &quot;original_plan_service&quot;: 0.9,
+            &quot;full_service_share&quot;: 0.3333333333333333,
+            &quot;cost_retention&quot;: 0.2222222222222222
+          },
+          &quot;weighted_score&quot;: 0.6581111111111111
+        }
+      ]
+    }
+  },
+  &quot;dataset&quot;: {
+    &quot;kind&quot;: &quot;synthetic&quot;,
+    &quot;id&quot;: &quot;TEACH-G2-001&quot;,
+    &quot;source&quot;: &quot;G1 synthetic transport fixture with explicit synthetic G2 extensions&quot;
+  },
+  &quot;status&quot;: &quot;CALCULATED&quot;,
+  &quot;soil_reference&quot;: [
+    {
+      &quot;natural_water_pct&quot;: null,
+      &quot;optimum_water_pct&quot;: null,
+      &quot;lab_max_dry_density_kg_m3&quot;: null,
+      &quot;reported_compaction_ratio&quot;: null,
+      &quot;source_zone&quot;: 1,
+      &quot;water_difference_pp&quot;: null
+    },
+    {
+      &quot;natural_water_pct&quot;: null,
+      &quot;optimum_water_pct&quot;: null,
+      &quot;lab_max_dry_density_kg_m3&quot;: null,
+      &quot;reported_compaction_ratio&quot;: null,
+      &quot;source_zone&quot;: 2,
+      &quot;water_difference_pp&quot;: null
+    },
+    {
+      &quot;natural_water_pct&quot;: null,
+      &quot;optimum_water_pct&quot;: null,
+      &quot;lab_max_dry_density_kg_m3&quot;: null,
+      &quot;reported_compaction_ratio&quot;: null,
+      &quot;source_zone&quot;: 3,
+      &quot;water_difference_pp&quot;: null
+    }
+  ],
+  &quot;sensitivity&quot;: {
+    &quot;route&quot;: [
+      2,
+      2
+    ],
+    &quot;points&quot;: [
+      {
+        &quot;ratio&quot;: 0.5,
+        &quot;rate&quot;: 1.0,
+        &quot;status&quot;: &quot;OPTIMAL&quot;,
+        &quot;synthetic_cny&quot;: 130.0
+      },
+      {
+        &quot;ratio&quot;: 0.75,
+        &quot;rate&quot;: 1.5,
+        &quot;status&quot;: &quot;OPTIMAL&quot;,
+        &quot;synthetic_cny&quot;: 145.0
+      },
+      {
+        &quot;ratio&quot;: 1,
+        &quot;rate&quot;: 2.0,
+        &quot;status&quot;: &quot;OPTIMAL&quot;,
+        &quot;synthetic_cny&quot;: 160.0
+      },
+      {
+        &quot;ratio&quot;: 1.25,
+        &quot;rate&quot;: 2.5,
+        &quot;status&quot;: &quot;OPTIMAL&quot;,
+        &quot;synthetic_cny&quot;: 175.0
+      },
+      {
+        &quot;ratio&quot;: 1.5,
+        &quot;rate&quot;: 3.0,
+        &quot;status&quot;: &quot;OPTIMAL&quot;,
+        &quot;synthetic_cny&quot;: 190.0
+      }
+    ],
+    &quot;route_allowed&quot;: true
+  },
+  &quot;effective_loose_dry_density_kg_m3&quot;: [
+    800,
+    1200,
+    1600
+  ]
+}</pre></details></main></html>

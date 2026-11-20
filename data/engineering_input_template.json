@@ -1,0 +1,69 @@
+{
+  "mode": "engineering",
+  "source": "Incomplete input template, not measured project data",
+  "bank_volumes_m3": [
+    null,
+    null,
+    null
+  ],
+  "compacted_volumes_m3": [
+    null,
+    null,
+    null
+  ],
+  "bank_dry_density_kg_m3": [
+    null,
+    null,
+    null
+  ],
+  "compacted_dry_density_kg_m3": [
+    null,
+    null,
+    null
+  ],
+  "haul_rate_cny_per_m3_km": [
+    [
+      8.5,
+      12,
+      15
+    ],
+    [
+      11,
+      6.2,
+      14
+    ],
+    [
+      13,
+      14,
+      7.5
+    ]
+  ],
+  "distance_km": [
+    [
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null
+    ]
+  ],
+  "distance_source": null,
+  "density_source": null,
+  "billing_volume_state": "bank",
+  "action": "optimize",
+  "dataset_kind": "real",
+  "rate_source": null,
+  "scenario_conditions": {
+    "compatible_material": null,
+    "zero_dry_mass_loss": null,
+    "closed_balance": null
+  }
+}

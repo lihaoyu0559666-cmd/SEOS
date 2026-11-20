@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SEOS research source record (design only)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "origin",
+    "title",
+    "uri",
+    "local_file",
+    "local_sha256",
+    "locator",
+    "availability",
+    "content_review",
+    "project_applicability",
+    "review_record_id",
+    "reviewer",
+    "reviewed_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "origin": {
+      "enum": [
+        "TEACHING",
+        "SYNTHETIC",
+        "PUBLISHED_CASE",
+        "MEASURED",
+        "STANDARD",
+        "ACADEMIC"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uri": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "local_file": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "local_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "locator": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "unit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "availability": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "NOT TESTED"
+      ]
+    },
+    "content_review": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "NOT TESTED"
+      ]
+    },
+    "project_applicability": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "NOT TESTED"
+      ]
+    },
+    "review_record_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "project_applicability": {
+            "const": "PASS"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "local_file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "review_record_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reviewer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reviewed_at": {
+            "type": "string",
+            "minLength": 1
+          },
+          "local_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  ]
+}

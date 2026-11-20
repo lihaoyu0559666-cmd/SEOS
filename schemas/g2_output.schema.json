@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "g2.1"
+        },
+        "status": {
+          "const": "CALCULATED"
+        },
+        "dataset_kind": {
+          "const": "synthetic"
+        },
+        "currency_result": {
+          "type": "null"
+        },
+        "dataset": {
+          "type": "object"
+        },
+        "modules": {
+          "type": "object",
+          "properties": {
+            "M1": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "const": "CLASSIFIED"
+                },
+                "samples": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "const": "CLASSIFIED"
+                      },
+                      "soil_class": {
+                        "enum": [
+                          "CL",
+                          "CH",
+                          "ML",
+                          "MH"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "soil_class"
+                    ]
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "material_allowed": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "boolean"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                }
+              },
+              "required": [
+                "status",
+                "samples",
+                "material_allowed"
+              ]
+            },
+            "M2": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "const": "CALCULATED"
+                },
+                "states": {
+                  "type": "object",
+                  "properties": {
+                    "bank": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "dry_mass_kg": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "dry_mass_exact_kg": {
+                            "type": "string",
+                            "pattern": "\\S"
+                          },
+                          "target_volume_m3": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "source_state": {
+                            "type": "string",
+                            "pattern": "\\S"
+                          },
+                          "target_state": {
+                            "type": "string",
+                            "pattern": "\\S"
+                          }
+                        },
+                        "required": [
+                          "dry_mass_kg",
+                          "dry_mass_exact_kg",
+                          "target_volume_m3",
+                          "source_state",
+                          "target_state"
+                        ]
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    "compacted": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "dry_mass_kg": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "dry_mass_exact_kg": {
+                            "type": "string",
+                            "pattern": "\\S"
+                          },
+                          "target_volume_m3": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "source_state": {
+                            "type": "string",
+                            "pattern": "\\S"
+                          },
+                          "target_state": {
+                            "type": "string",
+                            "pattern": "\\S"
+                          }
+                        },
+                        "required": [
+                          "dry_mass_kg",
+                          "dry_mass_exact_kg",
+                          "target_volume_m3",
+                          "source_state",
+                          "target_state"
+                        ]
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  },
+                  "required": [
+                    "bank",
+                    "compacted"
+                  ]
+                }
+              },
+              "required": [
+                "status",
+                "states"
+              ]
+            },
+            "M3": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "const": "OPTIMAL"
+                },
+                "allowed": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "boolean"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "matrix": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "objective_exact": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "feasibility_verified": {
+                  "const": true
+                }
+              },
+              "required": [
+                "status",
+                "allowed",
+                "matrix",
+                "objective_exact",
+                "feasibility_verified"
+              ]
+            },
+            "M4": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "const": "PROJECTED"
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "year": {
+                        "type": "integer"
+                      },
+                      "supply_kg": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "demand_kg": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "shortfall_kg": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "cumulative_net_deficit_kg": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "year",
+                      "supply_kg",
+                      "demand_kg",
+                      "shortfall_kg",
+                      "cumulative_net_deficit_kg"
+                    ]
+                  },
+                  "minItems": 3,
+                  "maxItems": 10
+                },
+                "present_value_synthetic_cny": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "status",
+                "series",
+                "present_value_synthetic_cny"
+              ]
+            },
+            "M5": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "const": "EVALUATED"
+                },
+                "alternatives": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "pattern": "\\S"
+                      },
+                      "status": {
+                        "type": "string",
+                        "pattern": "\\S"
+                      },
+                      "metrics": {
+                        "type": "object",
+                        "properties": {
+                          "worst_service": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "horizon_service": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "original_plan_service": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "full_service_share": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "cost_retention": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          }
+                        },
+                        "required": [
+                          "worst_service",
+                          "horizon_service",
+                          "original_plan_service",
+                          "full_service_share",
+                          "cost_retention"
+                        ]
+                      },
+                      "weighted_score": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "status"
+                    ],
+                    "if": {
+                      "properties": {
+                        "status": {
+                          "const": "EVALUATED"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "metrics",
+                        "weighted_score"
+                      ]
+                    }
+                  },
+                  "minItems": 1,
+                  "maxItems": 9
+                }
+              },
+              "required": [
+                "status",
+                "alternatives"
+              ]
+            }
+          },
+          "required": [
+            "M1",
+            "M2",
+            "M3",
+            "M4",
+            "M5"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "dataset_kind",
+        "currency_result",
+        "dataset",
+        "modules"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "INVALID_INPUT",
+            "MISSING_DATA",
+            "UNSUPPORTED_MODEL",
+            "REVIEW_REQUIRED",
+            "SOURCE_REVIEW_REQUIRED",
+            "UNBALANCED",
+            "INFEASIBLE",
+            "NUMERIC_ERROR"
+          ]
+        },
+        "currency_result": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "status",
+        "currency_result"
+      ]
+    }
+  ]
+}

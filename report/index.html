@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEOS · 土方调配分析</title>
+<link rel="icon" href="data:,">
+<style>:root {
+  color-scheme: light;
+  --blue-700:#1f4e79; --teal-500:#16a085; --slate-950:#12243a; --slate-700:#4a5f75;
+  --surface:#fff; --base:#edf2f7; --well:#f4f7fb; --line:#dbe4ee; --control:#75899d;
+  --ink:var(--slate-950); --muted:var(--slate-700); --accent:var(--blue-700); --focus:#1d67ac; --focus-on-dark:#b5eadf;
+  --ok:#126853; --ok-bg:#e5f5ee; --warn:#805014; --warn-bg:#fff3d9; --alert:#9d312a; --alert-bg:#fff0ed;
+  --supply:#1f4e79; --demand:#a34b27; --comparison:#087b69; --purple:#69488b; --grid:#e2e9f1;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  --r-input:7px; --r-panel:14px; --r-shell:21px;
+  --type-meta:.8125rem; --type-body:.9375rem; --type-title:1.125rem; --type-page:1.6875rem; --type-data:1.55rem;
+  --control-height:40px; --shadow:0 1px 2px #172f4810,0 3px 10px #172f4808;
+  --ease:cubic-bezier(.2,.65,.3,1); --duration:150ms;
+  --font:"Microsoft YaHei UI","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+}
+* {box-sizing:border-box}
+body {margin:0;background:var(--base);color:var(--ink);font:var(--type-body)/1.55 var(--font);font-variant-numeric:tabular-nums}
+h1,h2,h3,p,figure,dl,dd {margin:0}
+h1 {font-size:var(--type-page);line-height:1.15;letter-spacing:-.03em}
+h2 {font-size:var(--type-title);line-height:1.35}
+h3 {font-size:var(--type-body);line-height:1.45}
+p {max-width:68ch}
+a {color:var(--accent);text-underline-offset:3px}
+:focus-visible {outline:2px solid var(--focus);outline-offset:3px}
+::selection {background:#ccece4;color:var(--ink)}
+[hidden] {display:none!important}
+.viewport {max-width:1680px;margin-inline:auto;padding-inline:var(--sp-5)}
+.masthead {background:#11263b;color:var(--surface);border-block-end:3px solid var(--teal-500)}
+.masthead .viewport {min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);padding-block:var(--sp-3)}
+.brand {display:flex;align-items:center;gap:var(--sp-3);min-width:0}
+.brand-mark {width:46px;height:46px;flex:none;display:grid;place-items:center;color:#b5eadf;border:1px solid #68869b;border-radius:11px;background:#173550}
+.brand-mark svg {width:28px;height:28px}
+.brand p {color:#c6d7e7;font-size:var(--type-meta);margin-block-start:var(--sp-1)}
+.header-actions {display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.masthead :focus-visible {outline-color:var(--focus-on-dark)}
+.header-actions a {display:inline-flex;align-items:center;min-height:var(--control-height);padding-inline:var(--sp-3);color:#e7f1fa;border:1px solid #8ca5b9;border-radius:var(--r-input);text-decoration:none}
+.skip {position:absolute;z-index:5;inset-inline-start:var(--sp-4);inset-block-start:var(--sp-3);padding:var(--sp-2);background:var(--surface);transform:translateY(-180%)}
+.skip:focus {transform:none}
+.workspace {display:grid;grid-template-columns:minmax(265px,308px) minmax(0,1fr);gap:var(--sp-5);padding-block:var(--sp-5);align-items:start}
+aside,.viz,.details-pane,.schematic {background:var(--surface);border:1px solid var(--line);border-radius:var(--r-panel);box-shadow:var(--shadow)}
+aside,.results {min-width:0}
+aside {padding:var(--sp-4)}
+.control-title {display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-block-end:var(--sp-3)}
+.control-title a {font-size:var(--type-meta)}
+.case-note,.note,.field small,.viz p,.schematic figcaption,footer {color:var(--muted);font-size:var(--type-meta)}
+.case-note {overflow-wrap:anywhere;margin-block-start:var(--sp-2)}
+.field {display:grid;gap:var(--sp-1);margin:var(--sp-2) 0;min-width:0;font-size:var(--type-meta);font-weight:600}
+.fields {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-1) var(--sp-2)}
+.wide {grid-column:1/-1}
+.subgroup {margin-block:var(--sp-3) var(--sp-1);color:var(--accent)}
+.check {display:flex;align-items:center;gap:var(--sp-1);min-height:28px}
+button,input,select,textarea {font:inherit;color:inherit;background:var(--surface);border:1px solid var(--control);border-radius:var(--r-input)}
+button,input,select {min-height:var(--control-height);padding:var(--sp-1) var(--sp-2)}
+input:not([type=checkbox]),select,textarea {width:100%;min-width:0}
+input[type=checkbox] {appearance:auto;min-height:0;inline-size:17px;block-size:17px;accent-color:var(--accent)}
+textarea {padding:var(--sp-2);min-height:190px;resize:vertical;font:var(--type-meta)/1.5 ui-monospace,monospace}
+button {cursor:pointer;transition:background-color var(--duration) var(--ease)}
+button:disabled {opacity:.58;cursor:wait}
+button:active:not(:disabled) {border-color:var(--accent);background:#e7eff8}
+aside nav {display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-block:var(--sp-3)}
+aside nav button {flex:1}
+aside nav button:first-child {background:var(--accent);color:var(--surface);border-color:var(--accent);font-weight:650}
+aside nav button:first-child:active:not(:disabled) {background:#173e60}
+aside details {border-block-start:1px solid var(--line);padding-block:var(--sp-1)}
+aside #fields {margin-block-start:var(--sp-4)}
+summary {min-height:37px;padding-block:var(--sp-2);font-weight:650;cursor:pointer;color:var(--ink)}
+summary::marker {color:var(--accent)}
+#advanced button {margin-block:var(--sp-2)}
+.toolbar {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-2)}
+.states {display:flex;gap:var(--sp-1);flex-wrap:wrap;font-size:var(--type-meta);color:var(--muted)}
+.states span,.scope-chip {padding:var(--sp-1) var(--sp-2);border:1px solid var(--line);border-radius:var(--r-input);background:var(--surface)}
+.scope-chip {color:#dfedf8;border-color:#6e8da4;background:#173550;font-size:var(--type-meta)}
+.notice {margin-block:var(--sp-3);padding:var(--sp-2) var(--sp-3);border:1px solid var(--line);border-radius:var(--r-input);background:var(--well);color:var(--muted);overflow-wrap:anywhere;font-size:var(--type-meta)}
+.notice[data-state=CALCULATED] {background:var(--ok-bg);color:var(--ok);border-color:#acd2c7}
+.notice.error {background:var(--alert-bg);color:var(--alert);border-color:#e8bbb5}
+.notice[data-state=SOURCE_REVIEW_REQUIRED] {background:var(--warn-bg);color:var(--warn);border-color:#e1c895}
+.summary {margin-block-end:var(--sp-4)}
+.summary p {margin-block-start:var(--sp-2);font-size:var(--type-meta);color:var(--muted);overflow-wrap:anywhere}
+.kpis {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--sp-2)}
+.kpi {background:var(--surface);border:1px solid var(--line);border-radius:var(--r-panel);padding:var(--sp-3);overflow-wrap:anywhere;box-shadow:var(--shadow)}
+.kpi:first-child {background:#e9f1fa;border-color:#c6d9ea}
+.kpi dt {color:var(--muted);font-size:var(--type-meta);font-weight:600}
+.kpi dd {font-size:var(--type-data);font-weight:750;line-height:1.2;margin-block:var(--sp-1);letter-spacing:-.02em}
+.kpi small {font-size:var(--type-meta);color:var(--muted);display:block;font-weight:400;letter-spacing:0;margin-block-start:var(--sp-2)}
+.viz-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)}
+.viz {min-width:0;padding:var(--sp-4);break-inside:avoid}
+.viz h3 {font-weight:700;font-size:1rem;margin-block-end:var(--sp-1)}
+.plot {position:relative;height:208px;margin-block-start:var(--sp-2)}
+.plot canvas {max-inline-size:100%}
+.viz:last-child {grid-column:1/-1}
+.viz:last-child .plot {height:256px}
+.pending {visibility:hidden}
+.heat {width:100%;margin-block-start:var(--sp-2);table-layout:fixed;border-collapse:separate;border-spacing:4px}
+.heat td,.heat th {text-align:center;padding:var(--sp-2) var(--sp-1);overflow-wrap:anywhere}
+.heat th {font-weight:600;color:var(--muted);font-size:var(--type-meta)}
+.heat td {border:1px solid var(--line);border-radius:var(--r-input);font-weight:700;font-size:var(--type-meta)}
+.heat td[data-blocked] {background:repeating-linear-gradient(-45deg,#f5f7fb 0 5px,#e8edf5 5px 6px);color:var(--muted)}
+.heat td:focus-visible {outline-offset:1px;outline-color:var(--ink)}
+.heat-key {display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-block-start:var(--sp-2);font-size:var(--type-meta);color:var(--muted)}
+.heat-scale {width:76px;height:9px;border-radius:5px;background:linear-gradient(to right,#f1f8f7,#62b8a7);border:1px solid #79a7a2}
+.details-pane,.schematic {margin-block-start:var(--sp-3);padding:0 var(--sp-4)}
+.details-pane pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--type-meta);max-height:350px;overflow:auto;overscroll-behavior:contain}
+.details-pane p {margin-block-end:var(--sp-3)}
+.schematic {padding-block:var(--sp-3)}
+.schematic svg {display:block;width:100%;height:auto;max-height:150px}
+.schematic figcaption {margin-block-start:var(--sp-2)}
+footer {padding-block:var(--sp-4);border-block-start:1px solid var(--line)}
+.static-shell {max-width:980px;margin:auto;padding:var(--sp-5)}
+.static-shell section {overflow:auto}
+.static-shell table {border-collapse:collapse;width:100%;margin-block:var(--sp-4);background:var(--surface)}
+.static-shell caption {padding-block:var(--sp-2);text-align:start;font-weight:700;color:var(--accent)}
+.static-shell td,.static-shell th {padding:var(--sp-2);text-align:start;border:1px solid var(--line)}
+.static-shell pre {white-space:pre-wrap;overflow-wrap:anywhere}
+@media (hover:hover) {
+  button:hover:not(:disabled) {background:#eef4fa}
+  aside nav button:first-child:hover:not(:disabled) {background:#183f64}
+  .header-actions a:hover {background:#27465f}
+  summary:hover {color:var(--accent)}
+  .heat td:hover {outline:1px solid var(--focus)}
+}
+@media (max-width:1100px) {
+  .viewport {padding-inline:var(--sp-4)}
+  .workspace {grid-template-columns:minmax(240px,270px) minmax(0,1fr);gap:var(--sp-3)}
+  .kpis {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:820px) {
+  .workspace {grid-template-columns:1fr}
+  .kpis {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .viz-grid {grid-template-columns:1fr}
+  .viz:last-child {grid-column:auto}
+}
+@media (max-width:490px) {
+  .masthead .viewport {align-items:flex-start;flex-direction:column}
+  .header-actions {gap:var(--sp-2)}
+  .brand-mark {width:40px;height:40px}
+  .field input,.field select {font-size:16px}
+  .plot {height:221px}
+}
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after {transition:none!important;scroll-behavior:auto!important} }
+</style>
+</head>
+<body>
+<a class="skip" href="#results">跳转到方案结果</a>
+<header class="masthead"><div class="viewport">
+<div class="brand">
+<div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m3 11 11-6 11 6-11 6zM3 15l11 6 11-6M3 19l11 6 11-6"/></svg></div>
+<div><h1>SEOS 土方调配分析</h1><p>智能建造工程工作台 · 天然方计费与干土质量守恒</p></div>
+</div>
+<div class="header-actions"><span class="scope-chip" id="scope-chip">教学工程 · 合成数据</span><a href="static.html">打开离线基线快照</a></div>
+</div></header>
+<main class="viewport workspace">
+<aside id="controls" aria-label="参数编辑">
+<div class="control-title"><h2>参数控制台</h2><a href="#results">查看结果</a></div>
+<label class="field">验证模式<select id="mode"><option value="synthetic">教学工程（合成数据）</option><option value="real">真实工程（资料待审）</option></select></label>
+<nav aria-label="参数操作"><button id="recalculate" type="button" disabled>立即重算</button><button id="reset" type="button">恢复预置</button></nav>
+<p id="mode-note" class="note"></p>
+<p id="case-note" class="case-note"></p>
+<div id="fields"></div>
+<details id="advanced"><summary>完整参数 JSON</summary><label class="field">计算输入<textarea id="parameters" spellcheck="false"></textarea></label><p class="note">可增删情景与方案，或修改来源记录。停止编辑后自动重算。继续使用表单前请同步。</p><button id="sync-form" type="button">从 JSON 同步表单</button></details>
+</aside>
+<section id="results" class="results" tabindex="-1" aria-labelledby="results-title">
+<div class="toolbar"><h2 id="results-title">方案结果</h2><div class="states"><span id="engine-state">Python 初始化中</span><span id="chart-state">Chart.js 加载中</span></div></div>
+<p id="status" role="status" class="notice">正在载入预置教学案例…</p>
+<div id="current"></div>
+<details id="current-result" class="details-pane" hidden><summary>五模块计算明细</summary><pre id="result"></pre></details>
+<details class="details-pane"><summary>最近一次有效结果</summary><p class="note">仅供历史对照。当前参数的结果见上方。</p><pre id="last-valid">尚无有效结果</pre></details>
+<details class="details-pane"><summary>算法与口径</summary><p>土类依据已核读的 GB/T 50145 细粒土子集。方量换算按干土质量，运输优化按天然方计费。敏感性逐点重求同一约束下的最优解，时序依据合成年度情景，韧性比较依据显式的扰动假设。</p></details>
+<figure class="schematic" id="site-diagram">
+<h3>施工挖填剖面示意</h3>
+<svg viewBox="0 0 680 154" role="img" aria-label="左侧挖方、右侧填方，虚线表示运输方向">
+<rect x="0" y="8" width="680" height="138" rx="10" fill="#f4f7fb"/>
+<path d="M24 92H656M24 120H656" stroke="#d8e1eb"/>
+<path d="M30 72h65l34 26h84l38-26h45v53H30z" fill="#dcc2a7" stroke="#9f724e"/>
+<path d="M388 109h60l38-35h83l42 35h34v16H388z" fill="#acd9cb" stroke="#087b69"/>
+<path d="M30 111h265m94 8h256" stroke="#9f724e" stroke-opacity=".45" stroke-dasharray="5 5"/>
+<path d="M219 57h227m-12-7 12 7-12 7" fill="none" stroke="#1f4e79" stroke-width="2.5" stroke-dasharray="6 4"/>
+<g fill="#12243a" font-size="16" font-family="system-ui,sans-serif"><text x="55" y="53">挖方区</text><text x="486" y="55">填方区</text><text x="282" y="42">运输方向</text></g>
+</svg>
+<figcaption>教学二维示意 · 剖面和方向仅用于解释挖、运、填，不表示真实地形、运输路线或比例。</figcaption>
+</figure>
+</section>
+</main>
+<footer><div class="viewport"><p>真实工程资料须独立审查。首次运行交互报告需联网加载 PyScript 和 Chart.js。</p></div></footer>
+<script id="seos-data" type="application/json">{"synthetic": {"schema_version": "g2.1", "dataset": {"kind": "synthetic", "id": "TEACH-G2-001", "source": "G1 synthetic transport fixture with explicit synthetic G2 extensions"}, "samples": [{"fine_mass_pct": 90, "oversize_mass_pct": 0, "organic_mass_pct": 1, "liquid_limit_pct": 40, "plastic_limit_pct": 20, "liquid_limit_method": "disk", "source": "SYNTHETIC teaching values; no lab test performed"}, {"fine_mass_pct": 90, "oversize_mass_pct": 0, "organic_mass_pct": 1, "liquid_limit_pct": 60, "plastic_limit_pct": 25, "liquid_limit_method": "disk", "source": "SYNTHETIC teaching values; no lab test performed"}, {"fine_mass_pct": 90, "oversize_mass_pct": 0, "organic_mass_pct": 1, "liquid_limit_pct": 35, "plastic_limit_pct": 25, "liquid_limit_method": "disk", "source": "SYNTHETIC teaching values; no lab test performed"}], "material_policy": {"accepted_classes": [["CL", "CH", "ML"], ["CL", "CH"], ["CH", "ML"]], "source": "SYNTHETIC teaching acceptance list; assumes permitted mixing and conditions in transport fixture"}, "transport": {"mode": "engineering", "action": "optimize", "dataset_kind": "synthetic", "bank_volumes_m3": [10, 20, 30], "bank_dry_density_kg_m3": [1000, 1500, 2000], "compacted_volumes_m3": [10, 10, 30], "compacted_dry_density_kg_m3": [2000, 2000, 2000], "haul_rate_cny_per_m3_km": [[2, 3, 4], [4, 2, 3], [3, 4, 2]], "distance_km": [[1, 2, 3], [2, 1, 2], [3, 2, 1]], "density_source": "SYNTHETIC arithmetic fixture, not measured", "distance_source": "SYNTHETIC arithmetic fixture, not measured", "rate_source": "SYNTHETIC arithmetic fixture, not contract", "billing_volume_state": "bank", "scenario_conditions": {"compatible_material": true, "zero_dry_mass_loss": true, "closed_balance": true}, "allowed": [[true, false, true], [true, true, true], [true, true, true]]}, "loose_dry_density_kg_m3": [800, 1200, 1600], "prediction": {"years": 5, "supply_growth_pct": 0, "demand_growth_pct": 10, "discount_pct": 5, "annual_payment_synthetic_cny": 160, "source": "SYNTHETIC annual sensitivity inputs; constant end-of-year illustrative payment"}, "risk": {"source": "SYNTHETIC what-if inputs; independent events; full service resumes after scenario duration", "horizon_days": 10, "events": [{"id": "rain", "kind": "rain", "duration_days": 3, "supply_available": [0.5, 1, 1], "routes_open": [[true, true, true], [true, true, true], [true, true, true]]}, {"id": "machine", "kind": "equipment_failure", "duration_days": 2, "supply_available": [1, 0.5, 1], "routes_open": [[true, true, true], [true, true, true], [true, true, true]]}, {"id": "route", "kind": "road_closure", "duration_days": 4, "supply_available": [1, 1, 1], "routes_open": [[false, true, true], [true, true, true], [true, true, true]]}], "alternatives": [{"id": "enable_backup_1_to_2", "allowed": [[true, true, true], [true, true, true], [true, true, true]]}], "weights": {"worst_service": 0.2, "horizon_service": 0.2, "original_plan_service": 0.2, "full_service_share": 0.2, "cost_retention": 0.2}, "weight_source": "SYNTHETIC equal weighting for illustration only; no project preferences elicited"}, "sensitivity_route": [2, 2], "loose_volume_ratio": [null, null, null], "soil_reference": [{"natural_water_pct": null, "optimum_water_pct": null, "lab_max_dry_density_kg_m3": null, "reported_compaction_ratio": null}, {"natural_water_pct": null, "optimum_water_pct": null, "lab_max_dry_density_kg_m3": null, "reported_compaction_ratio": null}, {"natural_water_pct": null, "optimum_water_pct": null, "lab_max_dry_density_kg_m3": null, "reported_compaction_ratio": null}]}, "real": {"schema_version": "g2.1", "dataset": {"kind": "real", "id": "", "source": ""}}}</script>
+<script>"use strict";
+const byId = id => document.getElementById(id);
+const fixtures = JSON.parse(byId("seos-data").textContent);
+const editor = byId("parameters");
+const mode = byId("mode");
+const drafts = {};
+let activeMode, formData, timer, engine, lastValid, version = 0, charts = [], chartReady = false;
+const telemetry = {state: "LOADING", cycle: 0, timings: [], current: null};
+window.seosTelemetry = telemetry;
+
+function element(tag, content, parent) {
+  const node = document.createElement(tag);
+  if (content !== null) node.textContent = content;
+  if (parent) parent.append(node);
+  return node;
+}
+function status(code, message, bad = false) {
+  telemetry.state = code;
+  const node = byId("status");
+  node.dataset.state = code;
+  node.textContent = message;
+  node.classList.toggle("error", bad);
+}
+function clearCurrent() {
+  // Also remove any instance registered before a constructor threw.
+  for (const canvas of byId("current").querySelectorAll("canvas")) {
+    const chart = window.Chart?.getChart(canvas);
+    if (chart) {
+      try { chart.destroy(); } catch (error) { console.error(error); }
+    }
+  }
+  charts = [];
+  byId("current").replaceChildren();
+  byId("current-result").hidden = true;
+  byId("result").textContent = "";
+  telemetry.current = null;
+}
+function errorStatus(code, message) {
+  clearCurrent();
+  byId("current").style.minBlockSize="";
+  status(code, message, true);
+}
+window.seosDependency = (name, ready) => {
+  if (name === "chart") chartReady = ready;
+  byId(name === "python" ? "engine-state" : "chart-state").textContent =
+    (name === "python" ? "Python" : "Chart.js") + (ready ? " 就绪" : " 加载失败");
+  if (!ready) errorStatus("DEPENDENCY_ERROR", "运行依赖加载失败。请检查网络，或打开离线基线快照。");
+};
+
+function canonical(text) {
+  const match = text.match(/^(-?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+  if (!match) return null;
+  let digits = (match[2] + (match[3] || "")).replace(/^0+/, "");
+  if (!digits) return "0";
+  let power = Number(match[4] || 0) - (match[3] || "").length;
+  if (!Number.isSafeInteger(power)) return null;
+  while (digits.endsWith("0")) { digits = digits.slice(0, -1); power++; }
+  return match[1] + digits + "e" + power;
+}
+function numeric(text) {
+  if (!text.trim()) return null;
+  const n = Number(text);
+  const exact = canonical(text);
+  return exact && Number.isFinite(n) && exact === canonical(String(n)) ? n : text;
+}
+function field(parent, path, title, type = "number", options = []) {
+  const owner = path.slice(0, -1).reduce((obj, key) => obj?.[key], formData);
+  if (!owner || typeof owner !== "object") return;
+  const key = path.at(-1);
+  const label = element("label", null, parent);
+  label.className = type === "bool" ? "field check" : "field";
+  if (type === "text" || type === "choice") label.classList.add("wide");
+  element("span", title, label);
+  const selectable = type === "choice" || type === "index";
+  const control = element(selectable ? "select" : "input", null, label);
+  control.dataset.path = path.join(".");
+  if (selectable) {
+    for (const [value, caption] of options) {
+      const option = element("option", caption, control);
+      option.value = value;
+    }
+  } else {
+    control.type = type === "bool" ? "checkbox" : "text";
+    if (type === "number") control.inputMode = "decimal";
+  }
+  if (type === "bool") control.checked = owner[key] === true;
+  else control.value = owner[key] ?? "";
+  control.addEventListener("input", () => {
+    owner[key] = type === "bool" ? control.checked : (type === "number" || type === "index") ? numeric(control.value) : control.value;
+    editor.value = JSON.stringify(formData, null, 2);
+    schedule();
+  });
+}
+function group(parent, title, open = false) {
+  const details = element("details", null, parent);
+  details.open = open;
+  element("summary", title, details);
+  const grid = element("div", null, details);
+  grid.className = "fields";
+  return grid;
+}
+const routeName = (i, j) => (i + 1) + " → " + (j + 1);
+function indexed(grid, path, name, count, type) {
+  for (let i = 0; i < count; ++i) field(grid, [...path, i], name + " " + (i + 1), type);
+}
+function matrix(grid, path, type = "number") {
+  for (let i = 0; i < 3; ++i) for (let j = 0; j < 3; ++j) field(grid, [...path, i, j], routeName(i, j), type);
+}
+function heading(grid, name) { element("h3", name, grid).className = "wide subgroup"; }
+
+function buildFields() {
+  const target = byId("fields");
+  const opened = new Set([...target.querySelectorAll("details[open] > summary")].map(n => n.textContent));
+  const fresh = !target.childElementCount;
+  target.replaceChildren();
+  if (!formData || formData.dataset?.kind !== "synthetic") return;
+
+  const soil = group(target, "土料与填区适用性");
+  (Array.isArray(formData.samples) ? formData.samples.slice(0, 3) : []).forEach((_, i) => {
+    heading(soil, "挖方 " + (i + 1));
+    const fields = {fine_mass_pct:"细粒 %",oversize_mass_pct:"巨粒 %",organic_mass_pct:"有机质 %",
+                    liquid_limit_pct:"液限 %",plastic_limit_pct:"塑限 %"};
+    for (const [key, name] of Object.entries(fields)) field(soil, ["samples", i, key], name);
+    field(soil, ["samples", i, "liquid_limit_method"], "液限方法", "choice",
+          [["disk","碟式仪"],["cone_76g_30deg_17mm","76 g / 30° / 17 mm 液限仪"]]);
+  });
+  const accepted = formData.material_policy?.accepted_classes;
+  if (Array.isArray(accepted)) accepted.slice(0, 3).forEach((classes, j) => {
+    if (!Array.isArray(classes)) return;
+    heading(soil, "填方 " + (j + 1) + " 允许类码");
+    for (const code of ["CL","CH","ML","MH"]) {
+      const label = element("label", code, soil);
+      label.className = "field check";
+      const cb = element("input", null, label);
+      cb.type = "checkbox";
+      cb.checked = classes.includes(code);
+      cb.addEventListener("input", () => {
+        if (cb.checked && !classes.includes(code)) classes.push(code);
+        if (!cb.checked && classes.includes(code)) classes.splice(classes.indexOf(code), 1);
+        editor.value = JSON.stringify(formData, null, 2);
+        schedule();
+      });
+    }
+  });
+
+  const references = group(target, "含水率与击实参考");
+  element("p","选填。含水率仅比较差值；最大干密度和压实系数作参考记录。运输计算使用方量区的目标压实干密度。",references).className = "wide note";
+  const labFields = {natural_water_pct:"天然含水 %",optimum_water_pct:"最优含水 %",
+                     lab_max_dry_density_kg_m3:"最大干密度 kg/m³",reported_compaction_ratio:"压实系数"};
+  for (let i=0;i<3;i++) {
+    heading(references,"挖方 "+(i+1));
+    for (const [key,title] of Object.entries(labFields)) field(references,["soil_reference",i,key],title);
+  }
+
+  const quantities = group(target, "方量与干密度", fresh && !matchMedia("(max-width:820px)").matches);
+  for (const [key, title] of Object.entries({bank_volumes_m3:"天然方供应 · m³",compacted_volumes_m3:"压实方需求 · m³",
+      bank_dry_density_kg_m3:"天然干密度 · kg/m³",compacted_dry_density_kg_m3:"目标压实干密度 · kg/m³"})) {
+    heading(quantities,title); indexed(quantities,["transport",key],"区",3);
+  }
+  heading(quantities, "松散干密度 · kg/m³");
+  indexed(quantities,["loose_dry_density_kg_m3"],"挖方",3);
+  heading(quantities, "可松性比 · 松方 / 天然方（选填）");
+  indexed(quantities,["loose_volume_ratio"],"挖方",3);
+  element("p","填写时按天然干密度 ÷ 可松性比推导松散干密度。",quantities).className = "wide note";
+
+  const routes = group(target,"路线、运距与费率");
+  heading(routes,"费率 · 元/(m³天然方·km)"); matrix(routes,["transport","haul_rate_cny_per_m3_km"]);
+  heading(routes,"合成运距 · km"); matrix(routes,["transport","distance_km"]);
+  heading(routes,"道路开通"); matrix(routes,["transport","allowed"],"bool");
+  heading(routes,"敏感性扫描路线");
+  const indices = [["0","区 1"],["1","区 2"],["2","区 3"]];
+  // Choice values are converted to integers by the generic field handler.
+  field(routes,["sensitivity_route",0],"挖方","index",indices);
+  field(routes,["sensitivity_route",1],"填方","index",indices);
+
+  const forecast = group(target,"供需情景与折现");
+  for (const [key,title] of Object.entries({years:"年数 · 3–10",supply_growth_pct:"供应增长 %",demand_growth_pct:"需求增长 %",
+      discount_pct:"折现率 %",annual_payment_synthetic_cny:"年末付款 · 合成元"})) field(forecast,["prediction",key],title);
+
+  const risk = group(target,"扰动情景、方案与权重");
+  field(risk,["risk","horizon_days"],"评估窗 · 天");
+  const events = formData.risk?.events;
+  if (Array.isArray(events)) events.slice(0,30).forEach((event,i) => {
+    heading(risk,event?.id || "情景 " + (i + 1));
+    field(risk,["risk","events",i,"duration_days"],"持续 · 天");
+    indexed(risk,["risk","events",i,"supply_available"],"可用率 0–1 · 区",3);
+    heading(risk,"扰动期间开通");
+    matrix(risk,["risk","events",i,"routes_open"],"bool");
+  });
+  const variants = formData.risk?.alternatives;
+  if (Array.isArray(variants)) variants.slice(0,8).forEach((variant,i) => {
+    heading(risk,variant?.id || "方案 " + (i + 1));
+    matrix(risk,["risk","alternatives",i,"allowed"],"bool");
+  });
+  heading(risk,"指标权重 · 合计 1");
+  for (const [key,title] of Object.entries(metricLabels)) field(risk,["risk","weights",key],title);
+  for (const details of target.querySelectorAll("details")) {
+    if (opened.has(details.querySelector("summary").textContent)) details.open = true;
+  }
+}
+const metricLabels = {worst_service:"最差服务率",horizon_service:"评价窗服务率",original_plan_service:"原计划送达率",
+                      full_service_share:"完整服务占比",cost_retention:"成本保持率"};
+const exampleNames = {
+  baseline:"基线方案",enable_backup_1_to_2:"启用备用路线 1 → 2",rain:"雨季",machine:"设备故障",route:"道路中断"
+};
+const labelOf = id => Object.hasOwn(exampleNames,id) ? exampleNames[id] : id;
+const palette = getComputedStyle(document.documentElement);
+const token = name => palette.getPropertyValue(name).trim();
+const colors = ["--supply","--comparison","--demand","--purple","--muted"].map(token);
+const gridColor = token("--grid");
+const fmt = new Intl.NumberFormat("zh-CN",{maximumSignificantDigits:7});
+const format = value => fmt.format(value);
+function heatmap(parent, plan) {
+  const table = element("table",null,parent);
+  table.className = "heat";
+  table.setAttribute("aria-label","天然方调运矩阵，单位立方米");
+  const head = element("tr",null,element("thead",null,table));
+  element("th","挖方 / 填方",head);
+  for (let j=0;j<3;j++) element("th","填方 "+(j+1),head).scope = "col";
+  const body = element("tbody",null,table);
+  const peak = Math.max(...plan.matrix.flat(),0);
+  plan.matrix.forEach((row,i) => {
+    const tr = element("tr",null,body);
+    element("th","挖方 "+(i+1),tr).scope = "row";
+    row.forEach((value,j) => {
+      const cell = element("td",plan.allowed[i][j] ? format(value) : "禁运",tr);
+      cell.dataset.volume = value;
+      const description = "挖方 "+(i+1)+" → 填方 "+(j+1)+"，"+(plan.allowed[i][j] ? format(value)+" m³天然方" : "禁运");
+      cell.tabIndex = 0;
+      cell.title = description;
+      cell.setAttribute("aria-label",description);
+      if (plan.allowed[i][j]) {
+        cell.style.backgroundColor = "rgba(22,160,133,"+(0.06+(peak ? 0.58*value/peak : 0))+")";
+      } else cell.dataset.blocked = "";
+    });
+  });
+  const key = element("div",null,parent); key.className="heat-key";
+  element("span","0",key);
+  element("span",null,key).className="heat-scale";
+  element("span",format(peak)+" m³天然方 · 斜纹表示禁运",key);
+}
+function panel(grid, title, description) {
+  const section = element("section",null,grid);
+  section.className = "viz";
+  element("h3",title,section);
+  element("p",description,section);
+  return section;
+}
+function chart(panelNode,id,label,config) {
+  const box = element("div",null,panelNode); box.className = "plot";
+  const canvas = element("canvas",null,box); canvas.id=id;
+  canvas.setAttribute("role","img"); canvas.setAttribute("aria-label",label);
+  const custom = config.options || {};
+  const hooks = custom.plugins || {};
+  config.options = {animation:false,responsive:true,maintainAspectRatio:false,devicePixelRatio:Math.min(window.devicePixelRatio,2),
+    color:token("--muted"),font:{family:token("--font"),size:12},...custom,
+    plugins:{...hooks,legend:{position:"top",align:"start",labels:{usePointStyle:true,boxWidth:7,boxHeight:7,padding:11},...hooks.legend}}};
+  charts.push(new Chart(canvas,config));
+}
+function line(label,values,color) {
+  return {label,data:values,borderColor:color,backgroundColor:color,pointRadius:2.5,borderWidth:2,tension:0};
+}
+function verify(result, input) {
+  const finite = value => typeof value === "number" ? Number.isFinite(value) :
+    value && typeof value === "object" ? Object.values(value).every(finite) : true;
+  if (!finite(result) || result.dataset_kind !== "synthetic" || result.currency_result !== null ||
+      input.dataset.kind !== "synthetic") throw Error("教学结果口径或数值范围异常");
+  const plan = result.modules.M3, t = input.transport;
+  if (!plan.feasibility_verified || plan.matrix.length !== 3 || !plan.matrix.every(row =>
+    row.length === 3 && row.every(v => typeof v === "number" && v >= 0))) throw Error("非法调运矩阵");
+  const close = (x,y) => Number.isFinite(x) && Math.abs(x-y) <= 1e-12 + 1e-12*Math.abs(y);
+  let cost = 0;
+  for (let i=0;i<3;i++) {
+    if (!close(plan.matrix[i].reduce((a,b)=>a+b,0),t.bank_volumes_m3[i])) throw Error("挖方供应校核失败");
+    if (!close(plan.matrix.reduce((a,row,k)=>a+row[i]*t.bank_dry_density_kg_m3[k],0),
+               t.compacted_volumes_m3[i]*t.compacted_dry_density_kg_m3[i])) throw Error("填方干质量校核失败");
+    for (let j=0;j<3;j++) {
+      if (!plan.allowed[i][j] && plan.matrix[i][j] !== 0) throw Error("禁运路线出现运量");
+      cost += plan.matrix[i][j]*t.distance_km[i][j]*t.haul_rate_cny_per_m3_km[i][j];
+    }
+  }
+  if (!close(cost,plan.synthetic_cost_cny)) throw Error("天然方计费校核失败");
+}
+
+function axes(yTitle,xTitle) {
+  return {
+    x:{title:{display:!!xTitle,text:xTitle},grid:{display:false},ticks:{maxRotation:0}},
+    y:{title:{display:true,text:yTitle},grid:{color:gridColor},ticks:{maxTicksLimit:5}}
+  };
+}
+function kpi(panel,label,value,detail) {
+  const block = element("div",null,panel); block.className = "kpi";
+  element("dt",label,block);
+  const reading = element("dd",value,block);
+  element("small",detail,reading);
+}
+const barLabels = {
+  id:"seosBarLabels",
+  afterDatasetsDraw(chart) {
+    if (chart.width < 360 || chart.data.labels.length > 5 || chart.data.datasets.length > 2) return;
+    const context = chart.ctx;
+    context.save();
+    context.font = "600 11px "+token("--font");
+    context.fillStyle = token("--ink"); context.textAlign="center"; context.textBaseline="bottom";
+    chart.data.datasets.forEach((dataset,i)=>chart.getDatasetMeta(i).data.forEach((bar,j)=>{
+      if (chart.isDatasetVisible(i) && dataset.data[j] !== null) context.fillText(format(dataset.data[j]),bar.x,bar.y-3);
+    }));
+    context.restore();
+  }
+};
+function show(result) {
+  const {M1,M2,M3,M4,M5}=result.modules;
+  const output = byId("current");
+  output.classList.add("pending");
+  try {
+    const summary = element("section",null,output);
+    summary.className = "summary";
+    const metrics = element("dl",null,summary); metrics.className="kpis";
+    const demandMass = M2.states.compacted.reduce((sum,row)=>sum+row.dry_mass_kg,0);
+    kpi(metrics,"最优运输费",format(M3.synthetic_cost_cny),"合成元 · 天然方计费");
+    kpi(metrics,"已匹配需求",format(demandMass),"kg 干土");
+    kpi(metrics,"约束状态","已校核","供需守恒和禁运路线");
+    kpi(metrics,"首次年度缺口",M4.first_shortfall_year === null ? "未出现" : "第 "+M4.first_shortfall_year+" 年","教学情景");
+    const worst = M5.alternatives[0].metrics.worst_service;
+    kpi(metrics,"最差服务率",format(100*worst)+"%","基线方案 · 合成扰动");
+    element("p","土类 "+M1.samples.map(x=>x.soil_class).join(" / ")+" · 松方 "+
+      M2.states.bank.map(x=>format(x.target_volume_m3)).join(" / ")+" m³",summary);
+    element("p","现金流现值 "+format(M4.present_value_synthetic_cny)+" 合成元",summary);
+    for (const test of result.soil_reference) {
+      const values = [];
+      if (test.water_difference_pp !== null) values.push("含水偏差 "+format(test.water_difference_pp)+" 个百分点");
+      if (test.lab_max_dry_density_kg_m3 !== null) values.push("最大干密度 "+format(test.lab_max_dry_density_kg_m3)+" kg/m³");
+      if (test.reported_compaction_ratio !== null) values.push("录入压实系数 "+format(test.reported_compaction_ratio));
+      if (values.length) element("p","挖方 "+test.source_zone+" 试验参考 · "+values.join(" · "),summary);
+    }
+    const grid = element("div",null,output); grid.className="viz-grid";
+    heatmap(panel(grid,"调运矩阵","行是挖方区，列是填方区 · m³天然方"),M3);
+    const scenarios = M5.alternatives.filter(a=>a.status==="EVALUATED");
+    const withheld = M5.alternatives.filter(a=>a.status!=="EVALUATED");
+    if (withheld.length) element("p","未进入对比："+withheld.map(a=>labelOf(a.id)+"（"+a.status+"）").join("、"),summary);
+    const baseline = scenarios[0];
+    const events = baseline.events;
+    chart(panel(grid,"成本对比","合成元 · 扰动时无法完全服务则留空"),"cost","基线及扰动成本柱状图",{
+      type:"bar", data:{labels:["无扰动",...events.map(e=>labelOf(e.id))],datasets:scenarios.map((a,i)=>({
+        label:labelOf(a.id),data:[a.base_synthetic_cny,...a.events.map(e=>e.full_service_cost_synthetic_cny)],backgroundColor:colors[i%colors.length]
+      }))},plugins:[barLabels],options:{layout:{padding:{top:10}},scales:{
+        ...axes("合成元"),y:{...axes("合成元").y,beginAtZero:true,grace:"14%"}
+      },plugins:{tooltip:{callbacks:{label:item=>{
+        const base = item.chart.data.datasets[0].data[item.dataIndex];
+        const diff = item.raw-base;
+        const suffix = base !== null && item.datasetIndex > 0 ? "（较基线 "+(diff >= 0 ? "+" : "")+format(diff)+"）" : "";
+        return item.dataset.label+"："+format(item.raw)+" 合成元"+suffix;
+      }}}}}
+    });
+    const s = result.sensitivity;
+    const rejectedPoints = s.points.filter(p=>p.status!=="OPTIMAL");
+    if (rejectedPoints.length) {
+      element("p","敏感性部分取值超出模型范围："+rejectedPoints.map(p=>p.ratio+"× "+p.status).join("、"),summary);
+    }
+    chart(panel(grid,"费率敏感性","路线 "+routeName(...s.route)+" · 横轴为该路线费率倍数"+
+      (s.route_allowed ? "" : " · 当前禁运")),"sensitivity","费率敏感性折线图",{
+      type:"line",data:{labels:s.points.map(p=>p.ratio+"×"),datasets:[{
+        ...line("合成运费",s.points.map(p=>p.synthetic_cny),colors[0]),
+        pointRadius:s.points.map(p=>p.ratio===1?6:3),
+        pointBackgroundColor:s.points.map(p=>p.ratio===1?colors[2]:colors[0])
+      }]},options:{scales:axes("合成元","费率倍率"),plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:items=>"费率 "+format(s.points[items[0].dataIndex].rate)+" 元/(m³天然方·km)"
+      }}}}
+    });
+    chart(panel(grid,"供需情景推演","教学情景 · 当年需求超过供给即触发缺口预警"),"forecast","供需及年度缺口时序图",{
+      type:"line",data:{labels:M4.series.map(p=>"第 "+p.year+" 年"),datasets:[
+        line("供给",M4.series.map(p=>p.supply_kg),colors[0]),line("需求",M4.series.map(p=>p.demand_kg),colors[2]),
+        {...line("年度缺口",M4.series.map(p=>p.shortfall_kg),colors[1]),
+          pointRadius:M4.series.map(p=>p.year===M4.first_shortfall_year?6:2)},
+        {...line("累计净缺口",M4.series.map(p=>p.cumulative_net_deficit_kg),colors[3]),borderDash:[5,4]}
+      ]},options:{scales:axes("干土质量 · kg")}
+    });
+    chart(panel(grid,"方案韧性","五项指标 0–1 · 比较相同合成扰动"),"resilience","五指标方案韧性雷达图",{
+      type:"radar",data:{labels:Object.values(metricLabels),datasets:scenarios.map((a,i)=>({
+        ...line(labelOf(a.id),Object.keys(metricLabels).map(key=>a.metrics[key]),colors[i%colors.length]),fill:false
+      }))},options:{scales:{r:{min:0,max:1,grid:{color:gridColor},pointLabels:{font:{size:12}},ticks:{stepSize:.25}}}}
+    });
+  } finally {
+    output.classList.remove("pending");
+  }
+}
+
+const statusText = {MISSING_DATA:"缺少必要参数",UNSUPPORTED_MODEL:"超出当前教学模型范围",
+  REVIEW_REQUIRED:"土类限值需要人工判读",UNBALANCED:"供需干质量不平衡",INFEASIBLE:"现有材料与道路约束下无可行解",
+  INVALID_INPUT:"输入无效",SOURCE_REVIEW_REQUIRED:"真实工程资料待审，未执行工程计算",NUMERIC_ERROR:"数值校核失败"};
+function markDirty() {
+  if (telemetry.state !== "INPUT_CHANGED") {
+    const area = byId("current");
+    if (telemetry.current) area.style.minBlockSize = area.offsetHeight+"px";
+    clearCurrent();
+  }
+  status("INPUT_CHANGED","输入已更新，正在等待重算…");
+}
+function schedule(immediate = false) {
+  const token = ++version;
+  const start = performance.now();
+  window.clearTimeout(timer);
+  markDirty();
+  if (engine) timer = window.setTimeout(() => recalculate(token,start),immediate ? 0 : 140);
+}
+function recalculate(token,start) {
+  if (token !== version) return;
+  if (!chartReady || typeof Chart !== "function") {
+    errorStatus("DEPENDENCY_ERROR","Chart.js 未就绪。请检查网络后重新载入，或打开离线基线快照。");
+    return;
+  }
+  status("CALCULATING","正在计算五模块与敏感性…");
+  let input, output;
+  try {
+    input = JSON.parse(editor.value);
+    if (input?.dataset?.kind && input.dataset.kind !== mode.value) {
+      throw Error("JSON 数据轨道与当前模式不一致，请切换模式后再录入。");
+    }
+  } catch (error) {
+    telemetry.cycle++;
+    errorStatus("INVALID_INPUT",String(error));
+    return;
+  }
+  const computeStart = performance.now();
+  try { output = JSON.parse(engine(editor.value)); }
+  catch (error) {
+    telemetry.cycle++;
+    errorStatus("SERIALIZATION_ERROR","Python 计算或 JSON 返回失败。"+String(error));
+    return;
+  }
+  const computeEnd = performance.now();
+  telemetry.cycle++;
+  if (output.status !== "CALCULATED") {
+    const note = output.message || output.modules?.M1?.samples?.find(s=>s.status!=="CLASSIFIED")?.reason || "";
+    errorStatus(output.status,statusText[output.status] || output.status);
+    if (note) byId("status").textContent += "。"+note;
+    return;
+  }
+  try { verify(output,input); } catch (error) { errorStatus("NUMERIC_ERROR",String(error)); return; }
+  try { show(output); } catch (error) { errorStatus("RENDER_ERROR","图表绘制失败。"+String(error)); return; }
+  byId("current").style.minBlockSize="";
+  telemetry.current = output;
+  lastValid = {input,output};
+  byId("result").textContent = JSON.stringify(output,null,2);
+  byId("current-result").hidden = false;
+  byId("last-valid").textContent = JSON.stringify(lastValid,null,2);
+  status("CALCULATED","计算完成 · 五图已更新");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (version !== token || telemetry.state !== "CALCULATED") return;
+    telemetry.timings.push({cycle:telemetry.cycle,total_ms:performance.now()-start,
+      python_ms:computeEnd-computeStart,chart_count:charts.length+1});
+    if (telemetry.timings.length > 100) telemetry.timings.shift();
+  }));
+}
+
+window.seosAttach = callback => {
+  engine = callback;
+  byId("recalculate").disabled = false;
+  seosDependency("python",true);
+  schedule(true);
+};
+function changeMode(reset = false) {
+  if (!reset && activeMode) drafts[activeMode] = editor.value;
+  activeMode = mode.value;
+  byId("scope-chip").textContent = mode.value === "synthetic" ? "教学工程 · 合成数据" : "真实工程 · 资料待审";
+  byId("case-note").textContent = mode.value === "synthetic" ? "预置案例 "+fixtures.synthetic.dataset.id : "请提供真实工程数据与来源记录。";
+  byId("fields").inert = false;
+  formData = structuredClone(fixtures[mode.value]);
+  byId("mode-note").textContent = mode.value === "synthetic" ?
+    "预置试验与运输参数均为合成。更改字段后自动重算。" :
+    "该轨道需要实测密度、实际运距、有效费率及材料适用性证据。可在 JSON 录入资料。";
+  editor.value = (!reset && drafts[mode.value]) || JSON.stringify(formData,null,2);
+  // Preserve edited lexemes. The structured form reopens after a validated calculation.
+  formData = parseFormData();
+  buildFields();
+  schedule(true);
+}
+editor.addEventListener("input", () => {
+  byId("fields").inert = true;
+  schedule();
+});
+function parseFormData() {
+  try {
+    const data = JSON.parse(editor.value);
+    // Preserve unsupported-precision numbers until corrected in the original text.
+    const tokens = editor.value.match(/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?/g) || [];
+    const safe = tokens.filter(x=>x[0]!=='"').every(x=>typeof numeric(x)==="number");
+    return safe && data?.dataset?.kind===mode.value ? data : null;
+  } catch (_) { return null; }
+}
+byId("sync-form").addEventListener("click", () => {
+  byId("fields").inert = false;
+  formData = parseFormData();
+  buildFields();
+  schedule(true);
+});
+mode.addEventListener("change",()=>changeMode());
+byId("reset").addEventListener("click",()=>changeMode(true));
+byId("recalculate").addEventListener("click",()=>schedule(true));
+changeMode(true);
+setTimeout(() => {
+  if (!engine) {
+    byId("engine-state").textContent="Python 初始化超时";
+    errorStatus("DEPENDENCY_ERROR","Python 未在 60 秒内初始化。可重试或打开离线基线快照。");
+  }
+},60000);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" onload="seosDependency('chart',true)" onerror="seosDependency('chart',false)"></script>
+<script type="module" src="https://pyscript.net/releases/2026.7.3/core.js" onerror="seosDependency('python',false)"></script>
+<script type="py">sources = __import__('json').loads("{\"seos/__init__.py\": \"\\\"\\\"\\\"SEOS teaching transport prototype.\\\"\\\"\\\"\\n\", \"seos/validation.py\": \"\\\"\\\"\\\"Software input domain, independent of engineering parameter approval.\\\"\\\"\\\"\\nfrom math import isfinite\\nfrom decimal import Decimal, InvalidOperation\\n\\nMIN_NONZERO = 1e-12\\nMAX_INPUT = 1e12\\n\\n\\nclass InputError(ValueError):\\n    def __init__(self, message, code='INVALID_INPUT'):\\n        super().__init__(message)\\n        self.code = code\\n\\n\\ndef number(value, name='value', positive=False):\\n    if isinstance(value, str):\\n        # Forms preserve unsupported lexemes as text; numeric strings stay invalid.\\n        try:\\n            decimal = Decimal(value)\\n            floating = float(value)\\n            if decimal.is_finite() and decimal != 0 and floating == 0:\\n                raise InputError(f'{name} underflows supported range', 'NUMERIC_RANGE')\\n            if decimal.is_finite() and isfinite(floating) and Decimal(str(floating)) != decimal:\\n                raise InputError(f'{name} has unsupported decimal precision', 'NUMERIC_PRECISION')\\n        except (InvalidOperation, OverflowError):\\n            pass\\n    if isinstance(value, bool) or not isinstance(value, (int, float)):\\n        raise InputError(f'{name} must be numeric')\\n    try:\\n        valid = isfinite(value)\\n    except OverflowError:\\n        valid = False\\n    if not valid or abs(value) > MAX_INPUT or (value != 0 and abs(value) \\u003c MIN_NONZERO):\\n        raise InputError(f'{name} outside software domain: zero or absolute value 1e-12..1e12', 'NUMERIC_RANGE')\\n    if value \\u003c 0 or (positive and value == 0):\\n        raise InputError(f'{name} must be ' + ('positive' if positive else 'nonnegative'))\\n    return value\\n\\n\\ndef validate_json_tree(value):\\n    if isinstance(value, str):\\n        try:\\n            value.encode('utf-8')\\n        except UnicodeError as error:\\n            raise InputError('JSON strings must contain valid Unicode scalar values') from error\\n        return\\n    if value is None or isinstance(value, bool):\\n        return\\n    if isinstance(value, (int, float)):\\n        number(abs(value), 'JSON number')\\n        return\\n    if isinstance(value, list):\\n        for item in value:\\n            validate_json_tree(item)\\n        return\\n    if isinstance(value, dict) and all(isinstance(key, str) for key in value):\\n        for key in value:\\n            validate_json_tree(key)\\n        for item in value.values():\\n            validate_json_tree(item)\\n        return\\n    raise InputError('JSON-compatible containers with string keys required')\\n\\n\\ndef failure(error):\\n    return {'status': 'INVALID_INPUT', 'error_code': getattr(error, 'code', 'INVALID_INPUT'), 'message': str(error)}\\n\", \"seos/main.py\": \"\\\"\\\"\\\"Shared strict JSON protocol for CLI and generated browser teaching page.\\\"\\\"\\\"\\nimport argparse\\nimport json\\nfrom pathlib import Path\\nfrom seos.modules.optimizer import solve\\nfrom seos.validation import validate_json_tree, failure, InputError\\n\\n\\ndef run_teaching(data):\\n    try:\\n        validate_json_tree(data)\\n        if not isinstance(data, dict) or data.get('mode', 'teaching') != 'teaching':\\n            raise ValueError('Supported teaching mode required')\\n        if any(key not in data for key in ['supply', 'demand', 'costs']):\\n            raise ValueError('supply, demand and costs are required')\\n        return solve(data['supply'], data['demand'], data['costs'], data.get('allowed'))\\n    except (ValueError, TypeError, OverflowError, RecursionError) as error:\\n        return failure(error)\\n\\n\\ndef run(data):\\n    try:\\n        validate_json_tree(data)\\n        if isinstance(data, dict) and data.get('mode') == 'engineering':\\n            from seos.engineering import prepare\\n            if data.get('action', 'prepare') == 'optimize':\\n                from seos.engineering_optimizer import optimize_engineering\\n                return optimize_engineering(data)\\n            if data.get('action', 'prepare') != 'prepare':\\n                raise ValueError('Unsupported engineering action')\\n            return prepare(data)\\n        result = run_teaching(data)\\n        if result['status'] == 'INVALID_INPUT':\\n            return result\\n        return {'schema_version': '0.3', 'status': result['status'], 'input': data, 'optimizer': result,\\n                'engineering_modules': {'status': 'BLOCKED', 'decisions': ['DEC-004', 'DEC-005', 'Q-07'], 'scope': 'physical data still required'}}\\n    except (ValueError, TypeError, OverflowError, RecursionError) as error:\\n        return failure(error)\\n\\n\\ndef run_browser(data):\\n    result = run(data)\\n    return result.get('optimizer', result)\\n\\n\\ndef parse_json_number(text):\\n    from decimal import Decimal\\n    value = float(text)\\n    mantissa = text.lower().split('e')[0]\\n    if value == 0 and any(c in '123456789' for c in mantissa):\\n        raise InputError('JSON numeric underflow is unsupported', 'NUMERIC_RANGE')\\n    from seos.validation import number\\n    number(abs(value), 'JSON number')\\n    if Decimal(text) != Decimal(str(value)):\\n        raise InputError('JSON decimal cannot roundtrip through supported float input', 'NUMERIC_PRECISION')\\n    return value\\n\\n\\ndef reject_nonfinite(value):\\n    raise ValueError(f'Nonstandard JSON numeric constant: {value}')\\n\\n\\ndef main():\\n    parser = argparse.ArgumentParser(description='SEOS 3x3 teaching LP')\\n    parser.add_argument('--input', type=Path, default=Path(__file__).resolve().parents[1]/'data/earthwork_example.json')\\n    args = parser.parse_args()\\n    try:\\n        data = json.loads(args.input.read_text(encoding='utf-8-sig'), parse_constant=reject_nonfinite, parse_float=parse_json_number)\\n        result = run(data)\\n        payload = json.dumps(result, ensure_ascii=True, indent=2, allow_nan=False)\\n    except (OSError, ValueError, TypeError, OverflowError, RecursionError) as error:\\n        result = failure(error)\\n        payload = json.dumps(result, ensure_ascii=True, allow_nan=False)\\n    print(payload)\\n    return 0 if result['status'] == 'OPTIMAL' else 2\\n\\n\\nif __name__ == '__main__':\\n    raise SystemExit(main())\\n\", \"seos/g2.py\": \"\\\"\\\"\\\"G2 teaching entry point. The existing G0/G1 interface stays available.\\\"\\\"\\\"\\nfrom argparse import ArgumentParser\\nfrom fractions import Fraction\\nimport json\\nfrom pathlib import Path\\n\\nfrom seos.engineering_optimizer import optimize_engineering\\nfrom seos.main import parse_json_number, reject_nonfinite\\nfrom seos.modules.earthwork_calculator import convert_state\\nfrom seos.modules.predictor import project\\nfrom seos.modules.resilience_evaluator import evaluate, intersect, mask\\nfrom seos.modules.soil_classifier import CLASSES, classify\\nfrom seos.validation import InputError, failure, validate_json_tree\\n\\n\\ndef three(values, label):\\n    if not isinstance(values, list) or len(values) != 3:\\n        raise InputError(f\\\"{label} requires three entries\\\")\\n    return values\\n\\n\\ndef link_volumes(transport, loose):\\n    \\\"\\\"\\\"Use audited conversions and retain exact mass for downstream checks.\\\"\\\"\\\"\\n    groups = {}\\n    for state in (\\\"bank\\\", \\\"compacted\\\"):\\n        volumes = three(transport[f\\\"{state}_volumes_m3\\\"], state)\\n        density = three(transport[f\\\"{state}_dry_density_kg_m3\\\"], state)\\n        targets = loose if state == \\\"bank\\\" else density\\n        target_state = \\\"loose\\\" if state == \\\"bank\\\" else \\\"compacted\\\"\\n        rows = []\\n        for volume, source, target in zip(volumes, density, targets):\\n            result = convert_state(volume, source, target)\\n            if result[\\\"status\\\"] != \\\"CALCULATED\\\":\\n                return {\\\"status\\\": result[\\\"status\\\"], \\\"state\\\": state, \\\"detail\\\": result}\\n            rows.append(dict(result, source_state=state, target_state=target_state,\\n                             source_volume_m3=volume,\\n                             dry_mass_exact_kg=str(Fraction(str(volume)) * Fraction(str(source)))))\\n        groups[state] = rows\\n    return {\\\"status\\\": \\\"CALCULATED\\\", \\\"states\\\": groups}\\n\\n\\ndef teaching(data):\\n    result = {\\\"schema_version\\\": \\\"g2.1\\\", \\\"dataset_kind\\\": \\\"synthetic\\\", \\\"currency_result\\\": None,\\n              \\\"modules\\\": {}}\\n    modules = result[\\\"modules\\\"]\\n    dataset = data[\\\"dataset\\\"]\\n    for key in (\\\"id\\\", \\\"source\\\"):\\n        if not isinstance(dataset[key], str) or not dataset[key].strip():\\n            raise InputError(f\\\"dataset {key} is required\\\")\\n    result[\\\"dataset\\\"] = dataset\\n    samples = [classify(s) for s in three(data[\\\"samples\\\"], \\\"samples\\\")]\\n    unresolved = next((r[\\\"status\\\"] for r in samples if r[\\\"status\\\"] != \\\"CLASSIFIED\\\"), None)\\n    modules[\\\"M1\\\"] = {\\\"status\\\": unresolved or \\\"CLASSIFIED\\\", \\\"samples\\\": samples}\\n    if unresolved:\\n        return dict(result, status=unresolved)\\n\\n    policy = data[\\\"material_policy\\\"]\\n    if not isinstance(policy[\\\"source\\\"], str) or not policy[\\\"source\\\"].strip():\\n        raise InputError(\\\"teaching material policy source is required\\\")\\n    classes = three(policy[\\\"accepted_classes\\\"], \\\"destination class policy\\\")\\n    if any(not isinstance(group, list) or any(c not in CLASSES for c in group) for group in classes):\\n        raise InputError(\\\"destination class policy contains an unsupported class\\\")\\n    material = [[s[\\\"soil_class\\\"] in group for group in classes] for s in samples]\\n    modules[\\\"M1\\\"].update(material_allowed=material, policy_source=policy[\\\"source\\\"])\\n\\n    transport = data[\\\"transport\\\"]\\n    if not isinstance(transport, dict) or transport.get(\\\"dataset_kind\\\") != \\\"synthetic\\\":\\n        raise InputError(\\\"transport must explicitly identify synthetic teaching data\\\")\\n    modules[\\\"M2\\\"] = link_volumes(transport, three(data[\\\"loose_dry_density_kg_m3\\\"], \\\"loose density\\\"))\\n    if modules[\\\"M2\\\"][\\\"status\\\"] != \\\"CALCULATED\\\":\\n        return dict(result, status=modules[\\\"M2\\\"][\\\"status\\\"])\\n    masses = modules[\\\"M2\\\"][\\\"states\\\"]\\n    supply, demand = ([Fraction(r[\\\"dry_mass_exact_kg\\\"]) for r in masses[state]]\\n                      for state in (\\\"bank\\\", \\\"compacted\\\"))\\n\\n    def optimize(routes):\\n        return optimize_engineering(dict(transport, allowed=routes))\\n\\n    roads = mask(transport[\\\"allowed\\\"])\\n    allowed = intersect(material, roads)\\n    plan = optimize(allowed)\\n    modules[\\\"M3\\\"] = dict(plan, allowed=allowed)\\n    if plan[\\\"status\\\"] != \\\"OPTIMAL\\\":\\n        return dict(result, status=plan[\\\"status\\\"])\\n    if [sum(Fraction(v) for v in row) * Fraction(str(rho))\\n        for row, rho in zip(plan[\\\"matrix_exact\\\"], transport[\\\"bank_dry_density_kg_m3\\\"])] != supply:\\n        raise InputError(\\\"M2 and M3 mass checks disagree\\\", \\\"INTEGRATION_CHECK\\\")\\n    modules[\\\"M4\\\"] = project(sum(supply), sum(demand), data[\\\"prediction\\\"])\\n\\n    risk = data[\\\"risk\\\"]\\n    if not isinstance(risk[\\\"source\\\"], str) or not risk[\\\"source\\\"].strip():\\n        raise InputError(\\\"risk scenario source is required\\\")\\n    densities = [Fraction(str(x)) for x in transport[\\\"bank_dry_density_kg_m3\\\"]]\\n    variants = risk[\\\"alternatives\\\"]\\n    if not isinstance(variants, list) or len(variants) > 8:\\n        raise InputError(\\\"at most eight explicit route alternatives are supported\\\")\\n    evaluations = [{\\\"id\\\": \\\"baseline\\\", \\\"base_synthetic_cny\\\": plan[\\\"synthetic_cost_cny\\\"],\\n                    **evaluate(plan, supply, demand, densities, dict(risk, allowed=allowed), optimize)}]\\n    ids = {\\\"baseline\\\"}\\n    for variant in variants:\\n        name = variant[\\\"id\\\"]\\n        if not isinstance(name, str) or not name.strip() or name in ids:\\n            raise InputError(\\\"alternative ids must be nonempty and unique\\\")\\n        ids.add(name)\\n        alternative = intersect(material, mask(variant[\\\"allowed\\\"]))\\n        alt_plan = optimize(alternative)\\n        if alt_plan[\\\"status\\\"] != \\\"OPTIMAL\\\":\\n            evaluations.append({\\\"id\\\": name, \\\"status\\\": alt_plan[\\\"status\\\"]})\\n            continue\\n        evaluations.append({\\\"id\\\": name, \\\"base_synthetic_cny\\\": alt_plan[\\\"synthetic_cost_cny\\\"],\\n                            **evaluate(alt_plan, supply, demand, densities,\\n                                       dict(risk, allowed=alternative), optimize)})\\n    modules[\\\"M5\\\"] = {\\\"status\\\": \\\"EVALUATED\\\", \\\"source\\\": risk[\\\"source\\\"], \\\"alternatives\\\": evaluations}\\n    return dict(result, status=\\\"CALCULATED\\\")\\n\\n\\ndef run(data):\\n    try:\\n        validate_json_tree(data)\\n        if not isinstance(data, dict) or data.get(\\\"schema_version\\\") != \\\"g2.1\\\":\\n            raise InputError(\\\"g2.1 input required\\\")\\n        dataset = data.get(\\\"dataset\\\")\\n        if not isinstance(dataset, dict):\\n            raise InputError(\\\"dataset must be an object\\\")\\n        if dataset.get(\\\"kind\\\") == \\\"real\\\":\\n            return {\\\"status\\\": \\\"SOURCE_REVIEW_REQUIRED\\\", \\\"dataset_kind\\\": \\\"real\\\",\\n                    \\\"currency_result\\\": None}\\n        if dataset.get(\\\"kind\\\") != \\\"synthetic\\\":\\n            raise InputError(\\\"G2 requires explicit synthetic dataset kind\\\")\\n        return teaching(data)\\n    except KeyError as error:\\n        return {\\\"status\\\": \\\"MISSING_DATA\\\", \\\"message\\\": f\\\"required field {error.args[0]}\\\",\\n                \\\"currency_result\\\": None}\\n    except (ValueError, TypeError, OverflowError, RecursionError) as error:\\n        return dict(failure(error), currency_result=None)\\n\\n\\ndef main():\\n    parser = ArgumentParser(description=\\\"SEOS G2 integrated teaching pipeline\\\")\\n    parser.add_argument(\\\"--input\\\", type=Path, default=Path(__file__).resolve().parents[1] / \\\"data/g2_teaching.json\\\")\\n    args = parser.parse_args()\\n    try:\\n        data = json.loads(args.input.read_text(encoding=\\\"utf-8-sig\\\"),\\n                          parse_float=parse_json_number, parse_constant=reject_nonfinite)\\n        result = run(data)\\n        payload = json.dumps(result, ensure_ascii=True, indent=2, allow_nan=False)\\n    except (OSError, ValueError, TypeError, OverflowError, RecursionError) as error:\\n        result = dict(failure(error), currency_result=None)\\n        payload = json.dumps(result, ensure_ascii=True, allow_nan=False)\\n    print(payload)\\n    return 0 if result[\\\"status\\\"] == \\\"CALCULATED\\\" else 2\\n\\n\\nif __name__ == \\\"__main__\\\":\\n    raise SystemExit(main())\\n\", \"seos/report_analysis.py\": \"\\\"\\\"\\\"Shared report calculations. The five audited modules are imported unchanged.\\\"\\\"\\\"\\nfrom argparse import ArgumentParser\\nfrom fractions import Fraction\\nimport json\\nfrom pathlib import Path\\n\\nfrom seos.engineering_optimizer import optimize_engineering\\nfrom seos.g2 import run\\nfrom seos.main import parse_json_number, reject_nonfinite\\nfrom seos.validation import InputError, failure, number\\n\\n\\ndef sensitivity(data, plan):\\n    \\\"\\\"\\\"Repeat the audited LP for one explicit unit-rate sweep.\\\"\\\"\\\"\\n    route = data.get(\\\"sensitivity_route\\\", [2, 2])\\n    if (not isinstance(route, list) or len(route) != 2\\n            or any(type(i) is not int or i not in range(3) for i in route)):\\n        raise InputError(\\\"sensitivity_route must identify a valid 3\\u00d73 route (zero based)\\\")\\n    i, j = route\\n    transport = data[\\\"transport\\\"]\\n    baseline = transport[\\\"haul_rate_cny_per_m3_km\\\"][i][j]\\n    points = []\\n    for ratio in (0.5, 0.75, 1, 1.25, 1.5):\\n        rate = float(Fraction(str(baseline)) * Fraction(str(ratio)))\\n        if ratio == 1 or baseline == 0 or not plan[\\\"allowed\\\"][i][j]:\\n            point = plan\\n        else:\\n            rates = [row.copy() for row in transport[\\\"haul_rate_cny_per_m3_km\\\"]]\\n            rates[i][j] = rate\\n            point = optimize_engineering(dict(transport, allowed=plan[\\\"allowed\\\"],\\n                                                haul_rate_cny_per_m3_km=rates))\\n        points.append({\\\"ratio\\\": ratio, \\\"rate\\\": rate, \\\"status\\\": point[\\\"status\\\"],\\n                       \\\"synthetic_cny\\\": point.get(\\\"synthetic_cost_cny\\\")})\\n    return {\\\"route\\\": route, \\\"points\\\": points, \\\"route_allowed\\\": plan[\\\"allowed\\\"][i][j]}\\n\\n\\ndef with_loose_ratios(data):\\n    \\\"\\\"\\\"Transfer explicit teaching ratios to the audited density-based input.\\\"\\\"\\\"\\n    if not isinstance(data, dict) or not isinstance(data.get(\\\"dataset\\\"), dict):\\n        return data\\n    if data[\\\"dataset\\\"].get(\\\"kind\\\") != \\\"synthetic\\\" or \\\"loose_volume_ratio\\\" not in data:\\n        return data\\n    ratios = data[\\\"loose_volume_ratio\\\"]\\n    if not isinstance(ratios, list) or len(ratios) != 3:\\n        raise InputError(\\\"loose_volume_ratio must have three explicit values or nulls\\\")\\n    if all(ratio is None for ratio in ratios):\\n        return data\\n    transport = data.get(\\\"transport\\\")\\n    if not isinstance(transport, dict):\\n        raise InputError(\\\"transport required for loose volume ratios\\\")\\n    banks = transport.get(\\\"bank_dry_density_kg_m3\\\")\\n    loose = data.get(\\\"loose_dry_density_kg_m3\\\")\\n    if any(not isinstance(values, list) or len(values) != 3 for values in (banks, loose)):\\n        raise InputError(\\\"three bank and loose density entries are required\\\")\\n    effective = loose.copy()\\n    for i, ratio in enumerate(ratios):\\n        if ratio is not None:\\n            ratio_value = number(ratio, \\\"loose volume ratio\\\", positive=True)\\n            bank_value = number(banks[i], \\\"bank dry density\\\", positive=True)\\n            derived = float(Fraction(str(bank_value)) / Fraction(str(ratio_value)))\\n            effective[i] = number(derived, \\\"derived loose dry density\\\", positive=True)\\n    return dict(data, loose_dry_density_kg_m3=effective)\\n\\n\\ndef observations(data):\\n    \\\"\\\"\\\"Editable teaching records. These are separate from mass and suitability inputs.\\\"\\\"\\\"\\n    references = data.get(\\\"soil_reference\\\")\\n    if references is None:\\n        return []\\n    if not isinstance(references, list) or len(references) != 3 or any(\\n            not isinstance(row, dict) for row in references):\\n        raise InputError(\\\"soil_reference requires one record per source\\\")\\n    keys = (\\\"natural_water_pct\\\", \\\"optimum_water_pct\\\", \\\"lab_max_dry_density_kg_m3\\\",\\n            \\\"reported_compaction_ratio\\\")\\n    records = []\\n    for i, row in enumerate(references):\\n        values = {}\\n        for key in keys:\\n            raw = row.get(key)\\n            values[key] = None if raw is None else number(raw, key, positive=key in keys[2:])\\n        natural, optimum = values[keys[0]], values[keys[1]]\\n        difference = None if natural is None or optimum is None else float(\\n            Fraction(str(natural)) - Fraction(str(optimum)))\\n        records.append(dict(values, source_zone=i + 1, water_difference_pp=difference))\\n    return records\\n\\n\\ndef analyze(data):\\n    try:\\n        effective = with_loose_ratios(data)\\n        result = run(effective)\\n        if result[\\\"status\\\"] != \\\"CALCULATED\\\":\\n            return result\\n        return dict(result, soil_reference=observations(effective),\\n                    sensitivity=sensitivity(effective, result[\\\"modules\\\"][\\\"M3\\\"]),\\n                    effective_loose_dry_density_kg_m3=effective[\\\"loose_dry_density_kg_m3\\\"])\\n    except (ValueError, TypeError, OverflowError, RecursionError) as error:\\n        return dict(failure(error), currency_result=None)\\n\\n\\ndef analyze_json(raw):\\n    try:\\n        data = json.loads(raw, parse_float=parse_json_number, parse_constant=reject_nonfinite)\\n        return analyze(data)\\n    except (ValueError, TypeError, OverflowError, RecursionError) as error:\\n        return dict(failure(error), currency_result=None)\\n\\n\\ndef main():\\n    parser = ArgumentParser(description=\\\"SEOS five-module report with unit-rate sensitivity\\\")\\n    parser.add_argument(\\\"--input\\\", type=Path, default=Path(__file__).resolve().parents[1] / \\\"data/g2_teaching.json\\\")\\n    args = parser.parse_args()\\n    try:\\n        result = analyze_json(args.input.read_text(encoding=\\\"utf-8-sig\\\"))\\n    except OSError as error:\\n        result = failure(error)\\n    print(json.dumps(result, ensure_ascii=True, indent=2, allow_nan=False))\\n    return 0 if result[\\\"status\\\"] == \\\"CALCULATED\\\" else 2\\n\\n\\nif __name__ == \\\"__main__\\\":\\n    raise SystemExit(main())\\n\", \"seos/engineering.py\": \"\\\"\\\"\\\"Engineering input gate. Missing physical or pricing data block calculation.\\\"\\\"\\\"\\nfrom math import isfinite\\nfrom seos.validation import number, failure, validate_json_tree\\nfrom seos.modules.earthwork_calculator import convert_state\\n\\n\\ndef prepare(data):\\n    \\\"\\\"\\\"Prepare source/destination masses and per-volume route prices.\\n\\n    Rates retain CNY/(m3 km). Billing volume state must be explicitly supplied.\\n    This gate does not approve material compatibility, borrow or disposal rules.\\n    \\\"\\\"\\\"\\n    try:\\n        validate_json_tree(data)\\n        if not isinstance(data, dict):\\n            raise ValueError('Engineering input must be an object')\\n    except (ValueError, TypeError, OverflowError, RecursionError) as error:\\n        return dict(failure(error), currency_result=None)\\n    required = ['bank_volumes_m3', 'compacted_volumes_m3',\\n                'bank_dry_density_kg_m3', 'compacted_dry_density_kg_m3',\\n                'haul_rate_cny_per_m3_km', 'distance_km', 'distance_source',\\n                'density_source', 'billing_volume_state']\\n    missing = [key for key in required if data.get(key) is None or data.get(key) == '']\\n    for key in required:\\n        value = data.get(key)\\n        if isinstance(value, list):\\n            for i, item in enumerate(value):\\n                if item is None:\\n                    missing.append(f'{key}[{i}]')\\n                elif isinstance(item, list):\\n                    missing.extend(f'{key}[{i}][{j}]' for j, cell in enumerate(item) if cell is None)\\n    if missing:\\n        return {'status': 'MISSING_DATA', 'missing_fields': missing,\\n                'decisions': ['DEC-004', 'DEC-005', 'DEC-006'], 'currency_result': None}\\n    vectors = ['bank_volumes_m3', 'compacted_volumes_m3',\\n               'bank_dry_density_kg_m3', 'compacted_dry_density_kg_m3']\\n    matrices = ['haul_rate_cny_per_m3_km', 'distance_km']\\n    try:\\n        if any(len(data[key]) != 3 for key in vectors):\\n            raise ValueError('Engineering prototype requires three supply and three demand nodes')\\n        if any(len(data[key]) != 3 or any(len(row) != 3 for row in data[key]) for key in matrices):\\n            raise ValueError('Rate and distance matrices must be 3x3')\\n        missing_cells = []\\n        for key in vectors:\\n            missing_cells.extend(f'{key}[{i}]' for i, value in enumerate(data[key]) if value is None)\\n        for key in matrices:\\n            missing_cells.extend(f'{key}[{i}][{j}]' for i, row in enumerate(data[key]) for j, value in enumerate(row) if value is None)\\n        if missing_cells:\\n            return {'status': 'MISSING_DATA', 'missing_fields': missing_cells, 'currency_result': None}\\n        values = [value for key in vectors for value in data[key]]\\n        values += [value for key in matrices for row in data[key] for value in row]\\n        for value in values:\\n            number(value)\\n        if any(value \\u003c= 0 for key in vectors[2:] for value in data[key]):\\n            raise ValueError('Dry densities must be positive')\\n        if data['billing_volume_state'] != 'bank':\\n            raise ValueError('DEC-006 requires bank volume billing')\\n        if any(not isinstance(data[key], str) or not data[key].strip() for key in ['density_source', 'distance_source']):\\n            raise ValueError('Density and distance provenance must be nonempty strings')\\n    except (TypeError, ValueError, OverflowError) as error:\\n        return dict(failure(error), currency_result=None)\\n    supply_mass = [convert_state(v, rho, rho) for v, rho in zip(data['bank_volumes_m3'], data['bank_dry_density_kg_m3'])]\\n    demand_mass = [convert_state(v, rho, rho) for v, rho in zip(data['compacted_volumes_m3'], data['compacted_dry_density_kg_m3'])]\\n    prices = [[rate * distance for rate, distance in zip(rates, distances)]\\n              for rates, distances in zip(data['haul_rate_cny_per_m3_km'], data['distance_km'])]\\n    if any(result['status'] != 'CALCULATED' for result in supply_mass + demand_mass) or any(not isfinite(v) for row in prices for v in row):\\n        return {'status': 'INVALID_INPUT', 'message': 'Calculation exceeds finite numeric range', 'currency_result': None}\\n    supply = [result['dry_mass_kg'] for result in supply_mass]\\n    demand = [result['dry_mass_kg'] for result in demand_mass]\\n    if not all(isfinite(v) for v in [sum(supply), sum(demand), sum(supply)-sum(demand)]):\\n        return {'status': 'NUMERIC_ERROR', 'error_code': 'AGGREGATE_RANGE', 'currency_result': None}\\n    return {'status': 'READY_FOR_MODEL_REVIEW', 'supply_dry_mass_kg': supply,\\n            'demand_dry_mass_kg': demand, 'dry_mass_gap_kg': sum(supply) - sum(demand),\\n            'route_price_cny_per_billed_m3': prices,\\n            'billing_volume_state': data['billing_volume_state'], 'currency_result': None,\\n            'provenance': {key: data[key] for key in ['density_source', 'distance_source']},\\n            'pending': ['material compatibility and loss policy', 'mass-variable LP and billed-volume mapping review'],\\n            'decisions': ['DEC-004', 'DEC-005', 'DEC-006']}\\n\", \"seos/engineering_optimizer.py\": \"\\\"\\\"\\\"DEC-004/005/006 restricted mass-conserving LP; synthetic validation only.\\nNo verified real dataset has yet been registered for this project.\\n\\\"\\\"\\\"\\nfrom fractions import Fraction\\nfrom itertools import combinations\\nfrom math import isfinite\\nfrom seos.modules.optimizer import linear_solve\\nfrom seos.engineering import prepare\\nfrom seos.validation import validate_json_tree, failure, InputError\\n\\n\\ndef verify_engineering_plan(x, data, allowed):\\n    f = lambda v: Fraction(str(v))\\n    supply = list(map(f, data['bank_volumes_m3']))\\n    demand = list(map(f, data['compacted_volumes_m3']))\\n    rb = list(map(f, data['bank_dry_density_kg_m3']))\\n    rc = list(map(f, data['compacted_dry_density_kg_m3']))\\n    return (all(v >= 0 for row in x for v in row)\\n            and all(x[i][j] == 0 for i in range(3) for j in range(3) if not allowed[i][j])\\n            and all(sum(x[i]) == supply[i] for i in range(3))\\n            and all(sum(rb[i]*x[i][j] for i in range(3)) == rc[j]*demand[j] for j in range(3)))\\n\\n\\ndef optimize_engineering(data):\\n    try:\\n        validate_json_tree(data)\\n        prepared = prepare(data)\\n        if prepared['status'] != 'READY_FOR_MODEL_REVIEW':\\n            return prepared\\n        if data['billing_volume_state'] != 'bank':\\n            raise InputError('DEC-006 requires bank volume billing')\\n        if data.get('dataset_kind') not in ['synthetic', 'real']:\\n            raise InputError('dataset_kind must explicitly identify synthetic or real')\\n        for key in ['density_source', 'distance_source', 'rate_source']:\\n            if not isinstance(data.get(key), str) or not data[key].strip():\\n                return {'status':'MISSING_DATA', 'missing_fields':[key], 'currency_result':None}\\n        conditions = data.get('scenario_conditions')\\n        keys = ['compatible_material', 'zero_dry_mass_loss', 'closed_balance']\\n        if not isinstance(conditions, dict) or any(conditions.get(k) is not True for k in keys):\\n            return {'status':'UNSUPPORTED_MODEL', 'error_code':'MODEL_CONDITIONS',\\n                    'message':'Explicit compatible material, zero dry mass loss and closed balance required; no borrow/disposal', 'currency_result':None}\\n        # A source label is not source verification. No real project measurements\\n        # or material suitability records have been supplied and reviewed yet.\\n        if data['dataset_kind'] == 'real':\\n            return {'status':'SOURCE_REVIEW_REQUIRED', 'error_code':'UNVERIFIED_PROJECT_DATA',\\n                    'message':'No verified project dataset registered; provenance and physical conditions need review', 'currency_result':None}\\n        allowed = data.get('allowed', [[True]*3 for _ in range(3)])\\n        if not isinstance(allowed,list) or len(allowed)!=3 or any(not isinstance(r,list) or len(r)!=3 or any(type(v) is not bool for v in r) for r in allowed):\\n            raise InputError('allowed must be a 3x3 boolean matrix')\\n        f = lambda v: Fraction(str(v))\\n        rb = list(map(f, data['bank_dry_density_kg_m3']))\\n        rc = list(map(f, data['compacted_dry_density_kg_m3']))\\n        s = [f(v)*rho for v,rho in zip(data['bank_volumes_m3'],rb)]\\n        d = [f(v)*rho for v,rho in zip(data['compacted_volumes_m3'],rc)]\\n        prices = [[f(data['haul_rate_cny_per_m3_km'][i][j])*f(data['distance_km'][i][j]) for j in range(3)] for i in range(3)]\\n        if sum(s)!=sum(d):\\n            return {'status':'UNBALANCED','error_code':'MASS_UNBALANCED','dry_mass_gap_kg':float(sum(s)-sum(d)), 'currency_result':None}\\n        # y_ij = rho_bank_i*x_ij. Positive rho gives a bijection to a\\n        # standard mass transportation LP with cost prices_ij/rho_bank_i.\\n        equations = [[int(k//3==i) for k in range(9)] for i in range(3)]\\n        equations += [[int(k%3==j) for k in range(9)] for j in range(2)]\\n        best = None\\n        for basis in combinations(range(9),5):\\n            values = linear_solve([[r[k] for k in basis] for r in equations],s+d[:2])\\n            if values is None or any(v\\u003c0 for v in values):\\n                continue\\n            y = [Fraction(0)]*9\\n            for k,v in zip(basis,values):\\n                y[k]=v\\n            x = [[y[3*i+j]/rb[i] for j in range(3)] for i in range(3)]\\n            if not verify_engineering_plan(x,data,allowed):\\n                continue\\n            objective = sum(prices[i][j]*x[i][j] for i in range(3) for j in range(3))\\n            if best is None or objective\\u003cbest[0]:\\n                best=objective,x\\n        if best is None:\\n            return {'status':'INFEASIBLE','error_code':'INFEASIBLE','currency_result':None}\\n        score,x = best\\n        if not verify_engineering_plan(x,data,allowed):\\n            return {'status':'NUMERIC_ERROR','error_code':'FEASIBILITY_CHECK','currency_result':None}\\n        matrix = [[float(v) for v in row] for row in x]\\n        rows = [sum(matrix[i])-data['bank_volumes_m3'][i] for i in range(3)]\\n        cols = [sum(float(rb[i])*matrix[i][j] for i in range(3))-float(d[j]) for j in range(3)]\\n        row_tol = [1e-12+1e-12*abs(v) for v in data['bank_volumes_m3']]\\n        mass_tol = [1e-12+1e-12*abs(float(v)) for v in d]\\n        if (not all(isfinite(v) for row in matrix for v in row)\\n            or not isfinite(float(score))\\n            or any(abs(v)>t for v,t in zip(rows,row_tol))\\n            or any(abs(v)>t for v,t in zip(cols,mass_tol))):\\n            return {'status':'NUMERIC_ERROR','error_code':'OUTPUT_PRECISION','currency_result':None}\\n        return {'status':'OPTIMAL','schema_version':'0.4','dataset_kind':'synthetic',\\n                'scope':'Synthetic compatible-material zero-loss closed-balance model; no real engineering conclusion',\\n                'billing_volume_state':'bank','matrix_unit':'m3 bank','objective_unit':'synthetic CNY',\\n                'matrix':matrix,'matrix_exact':[[str(v) for v in row] for row in x],\\n                'objective':float(score),'objective_exact':str(score),'synthetic_cost_cny':float(score),\\n                'currency_result':None,'feasibility_verified':True,\\n                'bank_volume_residuals_m3':rows,'dry_mass_residuals_kg':cols,\\n                'route_price_cny_per_bank_m3':[[float(v) for v in row] for row in prices],\\n                'decisions':['DEC-004','DEC-005','DEC-006']}\\n    except (ValueError,TypeError,OverflowError,RecursionError) as error:\\n        return dict(failure(error),currency_result=None)\\n\", \"seos/modules/__init__.py\": \"\", \"seos/modules/earthwork_calculator.py\": \"\\\"\\\"\\\"Explicit SI dry-solid mass conversion under DEC-004.\\n\\nApplicable to the same material with no dry-solid loss or addition.\\nNo density, compaction ratio or volume state is inferred from teaching data.\\n\\\"\\\"\\\"\\nfrom math import isfinite\\nfrom seos.validation import number, failure\\n\\n\\ndef convert_state(volume_m3, source_dry_density_kg_m3, target_dry_density_kg_m3):\\n    values = [volume_m3, source_dry_density_kg_m3, target_dry_density_kg_m3]\\n    if any(value is None for value in values):\\n        return {'status': 'MISSING_DATA', 'message': 'Volume and both dry densities are required'}\\n    try:\\n        number(volume_m3, 'volume')\\n        number(source_dry_density_kg_m3, 'source dry density', positive=True)\\n        number(target_dry_density_kg_m3, 'target dry density', positive=True)\\n    except (ValueError, TypeError, OverflowError) as error:\\n        return failure(error)\\n    mass = volume_m3 * source_dry_density_kg_m3\\n    target_volume = mass / target_dry_density_kg_m3\\n    if not isfinite(mass) or not isfinite(target_volume):\\n        return {'status': 'INVALID_INPUT', 'message': 'Calculation exceeds finite numeric range'}\\n    return {'status': 'CALCULATED', 'dry_mass_kg': mass, 'target_volume_m3': target_volume,\\n            'dry_mass_residual_kg': target_volume * target_dry_density_kg_m3 - mass,\\n            'conditions': ['same material', 'no dry-solid loss or addition'],\\n            'decision': 'DEC-004'}\\n\", \"seos/modules/optimizer.py\": \"\\\"\\\"\\\"Exact rational teaching transport LP, all six constraints checked separately.\\\"\\\"\\\"\\nfrom fractions import Fraction\\nfrom itertools import combinations\\nfrom math import isfinite\\nfrom seos.validation import number, failure\\n\\n\\ndef linear_solve(matrix, rhs):\\n    rows = [[Fraction(v) for v in row] + [value] for row, value in zip(matrix, rhs)]\\n    for col in range(len(rhs)):\\n        pivot = next((r for r in range(col, len(rhs)) if rows[r][col]), None)\\n        if pivot is None:\\n            return None\\n        rows[col], rows[pivot] = rows[pivot], rows[col]\\n        factor = rows[col][col]\\n        rows[col] = [v/factor for v in rows[col]]\\n        for r in range(len(rhs)):\\n            if r != col:\\n                factor = rows[r][col]\\n                rows[r] = [v-factor*p for v, p in zip(rows[r], rows[col])]\\n    return [row[-1] for row in rows]\\n\\n\\ndef verify_plan(matrix, supply, demand, allowed):\\n    return (all(v >= 0 for row in matrix for v in row)\\n            and all(matrix[i][j] == 0 for i in range(3) for j in range(3) if not allowed[i][j])\\n            and all(sum(matrix[i]) == supply[i] for i in range(3))\\n            and all(sum(matrix[i][j] for i in range(3)) == demand[j] for j in range(3)))\\n\\n\\ndef solve(supply, demand, costs, allowed=None):\\n    try:\\n        if len(supply) != 3 or len(demand) != 3 or len(costs) != 3 or any(len(row) != 3 for row in costs):\\n            raise ValueError('Only 3x3 inputs supported')\\n        for value in list(supply)+list(demand)+[v for row in costs for v in row]:\\n            number(value)\\n        if allowed is None:\\n            allowed = [[True]*3 for _ in range(3)]\\n        if len(allowed) != 3 or any(len(row) != 3 or any(type(v) is not bool for v in row) for row in allowed):\\n            raise ValueError('allowed must be a 3x3 boolean matrix')\\n    except (TypeError, ValueError, OverflowError) as error:\\n        return failure(error)\\n    s = [Fraction(str(v)) for v in supply]\\n    d = [Fraction(str(v)) for v in demand]\\n    c = [Fraction(str(v)) for row in costs for v in row]\\n    if sum(s) != sum(d):\\n        return {'status': 'UNBALANCED', 'error_code': 'UNBALANCED', 'message': 'Exact decimal totals differ; no implicit borrow/disposal', 'gap': float(sum(s)-sum(d))}\\n    equations = [[int(k//3 == i) for k in range(9)] for i in range(3)]\\n    equations += [[int(k%3 == j) for k in range(9)] for j in range(2)]\\n    rhs = s+d[:2]\\n    best = None\\n    count = 0\\n    # Enumerate full bases to retain zero-valued degenerate variables.\\n    # Disabled arcs must be exactly zero, including arbitrarily small flows.\\n    for basis in combinations(range(9), 5):\\n        values = linear_solve([[row[k] for k in basis] for row in equations], rhs)\\n        if values is None or any(v \\u003c 0 for v in values):\\n            continue\\n        flat = [Fraction(0)]*9\\n        for k, value in zip(basis, values):\\n            flat[k] = value\\n        matrix = [flat[i:i+3] for i in range(0, 9, 3)]\\n        if not verify_plan(matrix, s, d, allowed):\\n            continue\\n        count += 1\\n        objective = sum(v*price for v, price in zip(flat, c))\\n        if best is None or objective \\u003c best[0]:\\n            best = objective, matrix\\n    if best is None:\\n        return {'status': 'INFEASIBLE', 'error_code': 'INFEASIBLE', 'message': 'No feasible transport plan'}\\n    objective, exact = best\\n    if not verify_plan(exact, s, d, allowed):\\n        return {'status': 'NUMERIC_ERROR', 'error_code': 'FEASIBILITY_CHECK', 'message': 'Final feasibility check failed'}\\n    matrix = [[float(v) for v in row] for row in exact]\\n    score = float(objective)\\n    residuals = [sum(matrix[i])-supply[i] for i in range(3)]\\n    residuals += [sum(matrix[i][j] for i in range(3))-demand[j] for j in range(3)]\\n    scale = max(list(supply)+list(demand)+[0])\\n    tolerance = 1e-12+1e-12*scale\\n    if not isfinite(score) or not all(isfinite(v) for row in matrix for v in row) or max(map(abs, residuals)) > tolerance:\\n        return {'status': 'NUMERIC_ERROR', 'error_code': 'OUTPUT_PRECISION', 'message': 'Floating output failed finite/residual check'}\\n    return {'status': 'OPTIMAL', 'matrix': matrix, 'objective': score, 'objective_exact': str(objective),\\n            'matrix_exact': [[str(v) for v in row] for row in exact], 'max_residual': max(map(abs, residuals)),\\n            'feasible_bases': count, 'feasibility_verified': True, 'output_tolerance': tolerance,\\n            'scope': 'Same-basis abstract teaching model; no engineering monetary conclusion'}\\n\", \"seos/modules/soil_classifier.py\": \"\\\"\\\"\\\"Restricted teaching subset of GB/T 50145 table 4.0.8.\\\"\\\"\\\"\\nfrom fractions import Fraction\\n\\nfrom seos.validation import InputError, number\\n\\nCLASSES = (\\\"CL\\\", \\\"CH\\\", \\\"ML\\\", \\\"MH\\\")\\nTEST_METHODS = (\\\"disk\\\", \\\"cone_76g_30deg_17mm\\\")\\nFIELDS = (\\n    \\\"fine_mass_pct\\\", \\\"oversize_mass_pct\\\", \\\"organic_mass_pct\\\",\\n    \\\"liquid_limit_pct\\\", \\\"plastic_limit_pct\\\", \\\"liquid_limit_method\\\", \\\"source\\\",\\n)\\n\\n\\ndef classify(sample):\\n    if not isinstance(sample, dict):\\n        raise InputError(\\\"soil sample must be an object\\\")\\n    missing = [name for name in FIELDS if sample.get(name) is None]\\n    if missing:\\n        return {\\\"status\\\": \\\"MISSING_DATA\\\", \\\"fields\\\": missing}\\n    if not isinstance(sample[\\\"source\\\"], str) or not sample[\\\"source\\\"].strip():\\n        raise InputError(\\\"soil sample source is required\\\")\\n    amounts = {}\\n    for key in FIELDS[:-2]:\\n        amounts[key] = Fraction(str(number(sample[key], key)))\\n    fine, oversize, organic, ll, pl = amounts.values()\\n    if any(x > 100 for x in (fine, oversize, organic)) or fine + oversize > 100 or pl > ll:\\n        raise InputError(\\\"inconsistent grain, organic or Atterberg test values\\\")\\n    if (fine \\u003c= 75 or oversize != 0 or organic >= 5 or not 0 \\u003c ll \\u003c= 110\\n            or sample[\\\"liquid_limit_method\\\"] not in TEST_METHODS):\\n        return {\\\"status\\\": \\\"UNSUPPORTED_MODEL\\\", \\\"reason\\\": \\\"outside reviewed fine-soil teaching subset\\\"}\\n    pi = ll - pl\\n    a_line = Fraction(73, 100) * (ll - 20)\\n    if pi > 60:\\n        return {\\\"status\\\": \\\"UNSUPPORTED_MODEL\\\", \\\"reason\\\": \\\"outside reviewed plasticity chart\\\"}\\n    if ll == 50 or pi in (4, 7) or pi == a_line:\\n        return {\\\"status\\\": \\\"REVIEW_REQUIRED\\\", \\\"reason\\\": \\\"limit value, see clause 4.0.11\\\"}\\n    if pi >= a_line and 4 \\u003c= pi \\u003c= 7:\\n        return {\\\"status\\\": \\\"REVIEW_REQUIRED\\\", \\\"reason\\\": \\\"CL-ML transition requires use review\\\"}\\n    prefix = \\\"C\\\" if pi >= a_line and pi >= 7 else \\\"M\\\"\\n    return {\\n        \\\"status\\\": \\\"CLASSIFIED\\\", \\\"soil_class\\\": prefix + (\\\"H\\\" if ll > 50 else \\\"L\\\"),\\n        \\\"plasticity_index_pct\\\": float(pi), \\\"a_line_pct\\\": float(a_line),\\n        \\\"source\\\": sample[\\\"source\\\"], \\\"rule\\\": \\\"GB/T 50145-2007 (2026 amendment), table 4.0.8\\\",\\n        \\\"scope\\\": \\\"synthetic teaching classification\\\",\\n    }\\n\", \"seos/modules/predictor.py\": \"\\\"\\\"\\\"Annual dry-mass scenario projection with separately discounted payments.\\\"\\\"\\\"\\nfrom fractions import Fraction\\n\\nfrom seos.validation import InputError, number\\n\\n\\ndef project(supply, demand, config):\\n    years = config[\\\"years\\\"]\\n    if type(years) is not int or not 3 \\u003c= years \\u003c= 10:\\n        raise InputError(\\\"prediction years must be an integer from 3 to 10\\\")\\n    source = config[\\\"source\\\"]\\n    if not isinstance(source, str) or not source.strip():\\n        raise InputError(\\\"prediction scenario source is required\\\")\\n    rates = []\\n    for key in (\\\"supply_growth_pct\\\", \\\"demand_growth_pct\\\", \\\"discount_pct\\\"):\\n        rate = config[key]\\n        if type(rate) not in (int, float):\\n            raise InputError(f\\\"{key} must be numeric\\\")\\n        number(abs(rate), key)\\n        if not -100 \\u003c= rate \\u003c= 100 or (key == \\\"discount_pct\\\" and rate \\u003c 0):\\n            raise InputError(f\\\"{key} outside teaching scenario range\\\")\\n        rates.append(Fraction(str(rate)) / 100)\\n    sg, dg, discount = rates\\n    payment = Fraction(str(number(config[\\\"annual_payment_synthetic_cny\\\"], \\\"annual payment\\\")))\\n    cumulative = Fraction(0)\\n    pv = Fraction(0)\\n    series = []\\n    for year in range(1, years + 1):\\n        # Baseline totals are year 0. The annual input is applied from year 1.\\n        s = supply * (1 + sg) ** year\\n        d = demand * (1 + dg) ** year\\n        cumulative += d - s\\n        pv += payment / (1 + discount) ** year\\n        series.append({\\\"year\\\": year, \\\"supply_kg\\\": float(s), \\\"demand_kg\\\": float(d),\\n                       \\\"shortfall_kg\\\": float(max(0, d - s)),\\n                       \\\"cumulative_net_deficit_kg\\\": float(max(0, cumulative))})\\n    return {\\n        \\\"status\\\": \\\"PROJECTED\\\", \\\"method\\\": \\\"conditional_compound_scenario\\\", \\\"source\\\": source,\\n        \\\"year_zero\\\": {\\\"supply_kg\\\": float(supply), \\\"demand_kg\\\": float(demand)},\\n        \\\"series\\\": series, \\\"first_shortfall_year\\\": next((r[\\\"year\\\"] for r in series if r[\\\"shortfall_kg\\\"] > 0), None),\\n        \\\"first_cumulative_deficit_year\\\": next((r[\\\"year\\\"] for r in series if r[\\\"cumulative_net_deficit_kg\\\"] > 0), None),\\n        \\\"present_value_synthetic_cny\\\": float(pv), \\\"accuracy_evidence\\\": \\\"NOT TESTED\\\",\\n    }\\n\", \"seos/modules/resilience_evaluator.py\": \"\\\"\\\"\\\"Evaluate teaching disruptions using a bipartite cut and the audited LP.\\\"\\\"\\\"\\nfrom fractions import Fraction\\nfrom itertools import product\\n\\nfrom seos.validation import InputError, number\\n\\nMETRICS = (\\\"worst_service\\\", \\\"horizon_service\\\", \\\"original_plan_service\\\",\\n           \\\"full_service_share\\\", \\\"cost_retention\\\")\\n\\n\\ndef mask(value):\\n    if (not isinstance(value, list) or len(value) != 3\\n            or any(not isinstance(row, list) or len(row) != 3\\n                   or any(type(x) is not bool for x in row) for row in value)):\\n        raise InputError(\\\"route mask must be a 3x3 boolean matrix\\\")\\n    return value\\n\\n\\ndef intersect(a, b):\\n    return [[x and y for x, y in zip(ar, br)] for ar, br in zip(a, b)]\\n\\n\\ndef decimal(value):\\n    return Fraction(str(value))\\n\\n\\ndef event_service(supply, demand, routes):\\n    \\\"\\\"\\\"Exact max flow as the least finite cut of the three-source network.\\\"\\\"\\\"\\n    return min(\\n        sum(supply[i] for i in range(3) if not side[i])\\n        + sum(demand[j] for j in range(3) if any(side[i] and routes[i][j] for i in range(3)))\\n        for side in product((False, True), repeat=3)\\n    )\\n\\n\\ndef evaluate(plan, supply, demand, densities, scenario, reoptimize):\\n    total = sum(demand)\\n    if total \\u003c= 0:\\n        raise InputError(\\\"risk service requires positive dry-mass demand\\\")\\n    horizon = number(scenario[\\\"horizon_days\\\"], \\\"horizon_days\\\", positive=True)\\n    base_cost = Fraction(plan[\\\"objective_exact\\\"])\\n    flows = [[Fraction(x) * densities[i] for x in row]\\n             for i, row in enumerate(plan[\\\"matrix_exact\\\"])]\\n    events = scenario[\\\"events\\\"]\\n    if not isinstance(events, list) or not 1 \\u003c= len(events) \\u003c= 30:\\n        raise InputError(\\\"one to thirty risk events are required\\\")\\n    rows = []\\n    ids = set()\\n    for event in events:\\n        name = event[\\\"id\\\"]\\n        if not isinstance(name, str) or not name.strip() or name in ids:\\n            raise InputError(\\\"risk event ids must be nonempty and unique\\\")\\n        ids.add(name)\\n        kind = event[\\\"kind\\\"]\\n        if kind not in (\\\"rain\\\", \\\"equipment_failure\\\", \\\"road_closure\\\"):\\n            raise InputError(\\\"unsupported risk event kind\\\")\\n        days = number(event[\\\"duration_days\\\"], \\\"duration_days\\\", positive=True)\\n        if days > horizon:\\n            raise InputError(\\\"event duration exceeds analysis horizon\\\")\\n        factors = event[\\\"supply_available\\\"]\\n        if not isinstance(factors, list) or len(factors) != 3:\\n            raise InputError(\\\"three explicit supply availability fractions required\\\")\\n        if any(number(f, \\\"supply availability\\\") > 1 for f in factors):\\n            raise InputError(\\\"supply availability cannot exceed 1\\\")\\n        caps = [s * decimal(f) for s, f in zip(supply, factors)]\\n        routes = intersect(scenario[\\\"allowed\\\"], mask(event[\\\"routes_open\\\"]))\\n        served = event_service(caps, demand, routes)\\n        fixed = sum(sum(flows[i][j] for j in range(3) if routes[i][j]) * decimal(factors[i])\\n                    for i in range(3))\\n        coverage = served / total\\n        existing = fixed / total\\n        after_recovery = 1 - (1 - coverage) * decimal(days) / decimal(horizon)\\n        cost = None\\n        retained = Fraction(0)\\n        if served == total:\\n            result = reoptimize(routes)\\n            if result[\\\"status\\\"] != \\\"OPTIMAL\\\":\\n                raise InputError(\\\"risk cut and LP disagree on full service\\\", \\\"INTEGRATION_CHECK\\\")\\n            cost = Fraction(result[\\\"objective_exact\\\"])\\n            retained = Fraction(1) if cost == 0 else min(Fraction(1), base_cost / cost)\\n        rows.append((coverage, after_recovery, existing, int(served == total), retained, {\\n            \\\"id\\\": name, \\\"kind\\\": kind, \\\"duration_days\\\": days, \\\"served_kg_equivalent\\\": float(served),\\n            \\\"unserved_kg_equivalent\\\": float(total - served), \\\"service\\\": float(coverage),\\n            \\\"original_plan_service\\\": float(existing), \\\"horizon_service\\\": float(after_recovery),\\n            \\\"full_service_cost_synthetic_cny\\\": None if cost is None else float(cost),\\n        }))\\n    columns = list(zip(*rows))\\n    values = [min(columns[0]), sum(columns[1]) / len(rows), sum(columns[2]) / len(rows),\\n              Fraction(sum(columns[3]), len(rows)), sum(columns[4]) / len(rows)]\\n    weights = scenario.get(\\\"weights\\\")\\n    score = None\\n    if weights is not None:\\n        source = scenario.get(\\\"weight_source\\\")\\n        if not isinstance(source, str) or not source.strip() or not isinstance(weights, dict) or set(weights) != set(METRICS):\\n            raise InputError(\\\"explicit weights and their source are required for all five metrics\\\")\\n        factors = [decimal(number(weights[key], key)) for key in METRICS]\\n        if sum(factors) != 1:\\n            raise InputError(\\\"weights must sum to exactly one\\\")\\n        score = float(sum(v * w for v, w in zip(values, factors)))\\n    return {\\\"status\\\": \\\"EVALUATED\\\", \\\"events\\\": list(columns[5]), \\\"weights\\\": weights,\\n            \\\"weight_source\\\": scenario.get(\\\"weight_source\\\"),\\n            \\\"metrics\\\": {key: float(v) for key, v in zip(METRICS, values)}, \\\"weighted_score\\\": score}\\n\"}")
+
+import json
+from tempfile import TemporaryDirectory
+from pathlib import Path
+import platform
+import sys
+from pyodide.ffi import create_proxy
+from js import seosAttach
+
+package_dir = TemporaryDirectory(prefix="seos-")
+root = Path(package_dir.name)
+for name, source in sources.items():
+    file = root / name
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_text(source, encoding="utf8")
+sys.path.insert(0, str(root))
+
+from seos.report_analysis import analyze_json as run_browser
+
+def compute(data):
+    result = run_browser(data)
+    return json.dumps(result, ensure_ascii=True, allow_nan=False)
+
+callback = create_proxy(compute)
+seosAttach(callback)
+</script>
+</body>
+</html>
